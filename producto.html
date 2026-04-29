@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/main.css" />
   <style>
     /* ── Página de producto ─────────────────────────── */
     .prd-wrap {
@@ -36,6 +36,7 @@
       border: 1px solid rgba(0,0,0,.08);
       border-radius: 999px;
       padding: 9px 18px;
+      -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
       transition: background .2s;
     }
@@ -286,6 +287,7 @@
       height: 48px;
       background: white;
       -moz-appearance: textfield;
+      appearance: textfield;
     }
     .gc-input::-webkit-outer-spin-button,
     .gc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -425,7 +427,8 @@
     document.addEventListener("DOMContentLoaded", updateHeaderH);
     window.addEventListener("resize", updateHeaderH);
   </script>
-  <script src="cart.js" defer></script>
-  <script src="producto.js" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/product.js" defer></script>
 </body>
 </html>

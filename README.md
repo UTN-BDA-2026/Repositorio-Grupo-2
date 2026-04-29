@@ -28,4 +28,3 @@ Sitio web moderno y minimalista desarrollado para AGUSTINA, un emprendimiento de
 - Compresión y conversión de imágenes a WebP automática
 - Integración con Cloudflare R2 y Workers
 
-👨‍💻 Desarrollador: Juan Ignacio Pérez
