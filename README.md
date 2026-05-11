@@ -28,3 +28,46 @@ Sitio web moderno y minimalista desarrollado para AGUSTINA, un emprendimiento de
 - Compresión y conversión de imágenes a WebP automática
 - Integración con Cloudflare R2 y Workers
 
+---
+
+## Modelo de datos (PostgreSQL)
+
+El DDL versionado vive en [`db/schema.sql`](db/schema.sql). Resume el negocio del catálogo **AGUSTINA**: categorías y subcategorías normalizadas, y productos con precios, imágenes, descripción, vigencia (`activo`) y auditoría de fechas. La vista `v_productos_catalogo` proyecta columnas alineadas al JSON que consume el sitio (`name`, `price`, `cat`, `sub`, etc.).
+
+### Diagrama entidad–relación
+
+```mermaid
+erDiagram
+    categorias ||--o{ subcategorias : "1 N"
+    subcategorias ||--o{ productos : "1 N"
+
+    categorias {
+        smallserial id PK
+        varchar slug UK "slug catálogo"
+        varchar nombre
+    }
+
+    subcategorias {
+        serial id PK
+        smallint categoria_id FK
+        varchar slug "slug sub"
+        varchar nombre
+    }
+
+    productos {
+        bigserial id PK
+        varchar nombre
+        int precio
+        int precio_efectivo
+        int subcategoria_id FK
+        text image_url
+        text images
+        text descripcion
+        boolean activo
+        timestamptz created_at
+        timestamptz updated_at
+    }
+```
+
+**Notas:** en el DDL, `productos.images` es `text[]` (galería de URLs); el diagrama lo resume como `text` por compatibilidad con Mermaid. Los slugs en `categorias` y `subcategorias` equivalen a los filtros `cat` y `sub` del frontend; la vista `v_productos_catalogo` expone además `name` y `price` a partir de `nombre` y `precio`. Los índices extra para la actividad de rendimiento y `EXPLAIN ANALYZE` se aplican aparte (ver `Actividad_indices.md`).
+
