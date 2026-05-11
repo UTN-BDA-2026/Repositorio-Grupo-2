@@ -30,6 +30,32 @@ Sitio web moderno y minimalista desarrollado para AGUSTINA, un emprendimiento de
 
 ---
 
+## Base de datos (PostgreSQL + Sequelize)
+
+El DDL canónico está en `db/schema.sql`. Las migraciones aplican ese archivo para que el esquema y el repo no diverjan.
+
+### Requisitos
+
+- Node.js 18+
+- PostgreSQL (p. ej. instancia en Railway)
+
+### Setup
+
+1. `cp .env.example .env` y pegá `DATABASE_URL` del grupo. Si la conexión es a Railway desde tu máquina, dejá `DATABASE_SSL=true`.
+2. `npm install`
+3. `npx sequelize-cli db:migrate`
+
+### Uso de modelos (Node)
+
+```js
+const db = require('./db/models');
+// db.Categoria, db.Subcategoria, db.Producto, db.sequelize
+```
+
+La vista `v_productos_catalogo` existe solo en PostgreSQL; para consultarla con Sequelize usá `db.sequelize.query` con SQL crudo o definí un modelo `sequelize.define` con `tableName: 'v_productos_catalogo'`, `timestamps: false` (opcional).
+
+---
+
 ## Modelo de datos (PostgreSQL)
 
 El DDL versionado vive en [`db/schema.sql`](db/schema.sql). Resume el negocio del catálogo **AGUSTINA**: categorías y subcategorías normalizadas, y productos con precios, imágenes, descripción, vigencia (`activo`) y auditoría de fechas. La vista `v_productos_catalogo` proyecta columnas alineadas al JSON que consume el sitio (`name`, `price`, `cat`, `sub`, etc.).
