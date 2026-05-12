@@ -66,6 +66,34 @@ const db = require('./db/models');
 
 La vista `v_productos_catalogo` existe solo en PostgreSQL; para consultarla con Sequelize usá `db.sequelize.query` con SQL crudo o definí un modelo `sequelize.define` con `tableName: 'v_productos_catalogo'`, `timestamps: false` (opcional).
 
+### Seeds (volumen para EXPLAIN / índices)
+
+Después de `db:migrate`. Hay dos seeders en orden:
+
+1. `20250511140001-seed-catalogo-taxonomia.js` — categorías y subcategorías (slugs alineados al esquema y al admin).
+2. `20250511140002-seed-experiment-productos-bulk.js` — muchos productos sintéticos; el `nombre` empieza con `[seed-exp]` para poder borrarlos sin mezclar con datos reales.
+
+**Cantidad de productos:** variable de entorno `SEED_PRODUCT_COUNT` (default **15000**; tope **500000**). `0` omite la inserción masiva. Acordá un `N` razonable para Railway (probar 15k → 50k).
+
+```bash
+npx sequelize-cli db:seed:all
+npm run db:seed
+```
+
+Con volumen alto (ej. 50k), en **PowerShell:** `$env:SEED_PRODUCT_COUNT=50000; npx sequelize-cli db:seed:all` · **cmd:** `set SEED_PRODUCT_COUNT=50000&& npx sequelize-cli db:seed:all` · **bash:** `SEED_PRODUCT_COUNT=50000 npx sequelize-cli db:seed:all`
+
+Opcional: solo taxonomía — `npx sequelize-cli db:seed --seed 20250511140001-seed-catalogo-taxonomia.js`
+
+Revertir último seed: `npx sequelize-cli db:seed:undo` (repetir para deshacer ambos en orden inverso) o `npm run db:seed:undo` para todos.
+
+Para **volver a cargar solo** el volumen `[seed-exp]` después de haber corrido los dos seeders: `npx sequelize-cli db:seed:undo` (saca el bulk), luego `npx sequelize-cli db:seed --seed 20250511140002-seed-experiment-productos-bulk.js`.
+
+**Atención:** el `down` del seeder de taxonomía borra primero `productos` con nombre `[seed-exp] %` y luego subcategorías/categorías listadas. Si cargaron **productos reales** en esas mismas filas de catálogo, coordinen antes de hacer `db:seed:undo:all`.
+
+Podés documentar `SEED_PRODUCT_COUNT` en `.env` (ver `.env.example`).
+
+**Prompt sugerido (IA):** «Tablas `categorias`, `subcategorias`, `productos` según `db/schema.sql`. Necesito un seeder Sequelize que inserte X filas realistas (slugs, precios, `activo`, `created_at` variado) sin romper FKs. Incluir cómo ejecutarlo con `sequelize-cli db:seed:all`.»
+
 ### Errores típicos al migrar
 
 
