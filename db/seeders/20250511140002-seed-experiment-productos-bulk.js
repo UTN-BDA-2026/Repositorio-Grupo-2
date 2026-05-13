@@ -74,7 +74,7 @@ module.exports = {
           (now() - ((i % 900)::text || ' days')::interval
                  - ((i % 86400)::text || ' seconds')::interval),
           (now() - ((i % 120)::text || ' days')::interval)
-        FROM generate_series($1, $2) AS i
+        FROM generate_series($1::int, $2::int) AS i
         CROSS JOIN LATERAL (
           SELECT s.id AS sub_id
           FROM subcategorias s

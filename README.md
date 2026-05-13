@@ -48,7 +48,10 @@ El DDL canónico está en `db/schema.sql`. Las migraciones aplican ese archivo p
   - **bash:** `cp .env.example .env`
 2. Si conectan a **Railway desde Windows**, en `.env` dejar `**DATABASE_SSL=true`** (ver la sección *Errores típicos al migrar* más abajo).
 3. En la carpeta del repo: `npm install`
-4. Aplicar tablas: `npx sequelize-cli db:migrate` (equivalente: `npm run db:migrate`)
+4. Aplicar **estructura** (tablas y vista, sin filas de negocio): `npx sequelize-cli db:migrate` (equivalente: `npm run db:migrate`).
+5. Cargar **datos** (categorías, subcategorías y productos de experimento): `npx sequelize-cli db:seed:all` (equivalente: `npm run db:seed`). Sin este paso, en Railway las tablas van a existir pero **van a verse vacías**; no es un fallo de la migración.
+
+**Atajo:** `npm run db:setup` hace migrate + seed en un solo comando (útil en una PC nueva con `.env` ya configurado).
 
 Si algo falla: avisar con **captura del error** y **qué paso** estaban haciendo (por ejemplo: “después de `npm install`, al correr migrate”).
 
@@ -78,6 +81,7 @@ Después de `db:migrate`. Hay dos seeders en orden:
 ```bash
 npx sequelize-cli db:seed:all
 npm run db:seed
+npm run db:setup   # migrate + seed:all (misma sesión)
 ```
 
 Con volumen alto (ej. 50k), en **PowerShell:** `$env:SEED_PRODUCT_COUNT=50000; npx sequelize-cli db:seed:all` · **cmd:** `set SEED_PRODUCT_COUNT=50000&& npx sequelize-cli db:seed:all` · **bash:** `SEED_PRODUCT_COUNT=50000 npx sequelize-cli db:seed:all`
@@ -105,6 +109,7 @@ Podés documentar `SEED_PRODUCT_COUNT` en `.env` (ver `.env.example`).
 | `Node` no encontrado o paquetes raros                                              | Node **18+** (`node -v`). Borrar `node_modules` y `package-lock.json` solo si acordaron regenerar lock; en general: `npm install` de nuevo.                                                  |
 | `relation "categorias" already exists` / migración a medias                        | Alguien ya aplicó el esquema: `npx sequelize-cli db:migrate:status`. Si hace falta revertir en **dev**: `npm run db:migrate:undo` (solo si es seguro; si hay datos, coordinar con el grupo). |
 | `DATABASE_URL` vacía o sin pegar                                                   | El archivo debe llamarse `.env` (con punto) y estar en la **raíz** del repo; `DATABASE_URL=` debe tener la URL completa sin comillas.                                                        |
+| En Railway las tablas existen pero **están vacías** (0 filas)                    | Es lo esperado si solo corrieron `db:migrate`. La migración crea el esquema; los INSERT van por **seeders**: `npx sequelize-cli db:seed:all` (ver sección *Seeds*). Si `SEED_PRODUCT_COUNT=0`, el bulk de productos se omite pero la taxonomía sí se carga. |
 
 
 ---
