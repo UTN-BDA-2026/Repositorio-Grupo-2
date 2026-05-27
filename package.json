@@ -8,7 +8,8 @@
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
-    "db:setup": "sequelize-cli db:migrate && sequelize-cli db:seed:all"
+    "db:setup": "sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "informe:c": "node scripts/run-explain-c.js"
   },
   "engines": {
     "node": ">=18"

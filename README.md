@@ -203,6 +203,12 @@ Informe de optimización y conclusiones de producción: [`informe/seccion_E.md`]
 > En Windows con Railway, agregar al `.env`: `DATABASE_SSL=true`  
 > Antes de correr los EXPLAIN, asegurarse de que el seeder de Persona B ya cargó datos de volumen.
 
+Generar o actualizar `informe/seccion_C.md` (salidas literales + tabla antes/después):
+
+```bash
+npm run informe:c
+```
+
 ### Queries analizadas
 
 | ID | Descripción | Esperado sin índice | Esperado con índice |
