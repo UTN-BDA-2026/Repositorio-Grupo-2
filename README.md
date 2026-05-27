@@ -190,9 +190,15 @@ psql $DATABASE_URL -f db/experiments/02_create_indexes.sql
 # 4. Capturar planes CON índices — comparar con paso 2
 psql $DATABASE_URL -f db/experiments/03_with_indexes.sql
 
-# 5. Opcional: volver al estado baseline para repetir
+# 5. Auditoría de redundancia y uso de índices (Persona E)
+psql $DATABASE_URL -f db/experiments/05_index_audit.sql
+
+# 6. Opcional: volver al estado baseline para repetir
 psql $DATABASE_URL -f db/experiments/04_drop_indexes.sql
 ```
+
+Detalle de cada script: [`db/experiments/README.md`](db/experiments/README.md).  
+Informe de optimización y conclusiones de producción: [`informe/seccion_E.md`](informe/seccion_E.md).
 
 > En Windows con Railway, agregar al `.env`: `DATABASE_SSL=true`  
 > Antes de correr los EXPLAIN, asegurarse de que el seeder de Persona B ya cargó datos de volumen.
@@ -206,4 +212,4 @@ psql $DATABASE_URL -f db/experiments/04_drop_indexes.sql
 | Q3 | Panel admin: todos los productos con join | Seq Scan + Sort | Sort evitado en parte por `idx_created_at_desc` |
 
 
-**Notas:** en el DDL, `productos.images` es `text[]` (galería de URLs); el diagrama lo resume como `text` por compatibilidad con Mermaid. Los slugs en `categorias` y `subcategorias` equivalen a los filtros `cat` y `sub` del frontend; la vista `v_productos_catalogo` expone además `name` y `price` a partir de `nombre` y `precio`. Los índices extra para la actividad de rendimiento y `EXPLAIN ANALYZE` se aplican aparte (ver `Actividad_indices.md`).
+**Notas:** en el DDL, `productos.images` es `text[]` (galería de URLs); el diagrama lo resume como `text` por compatibilidad con Mermaid. Los slugs en `categorias` y `subcategorias` equivalen a los filtros `cat` y `sub` del frontend; la vista `v_productos_catalogo` expone además `name` y `price` a partir de `nombre` y `precio`. Los índices extra para rendimiento se documentan en esta sección, en `db/experiments/` y en `informe/seccion_E.md`.
