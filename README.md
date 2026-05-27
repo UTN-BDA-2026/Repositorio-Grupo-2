@@ -154,5 +154,56 @@ erDiagram
 ```
 
 
+---
+
+## Informe de rendimiento e índices
+
+### Índices implementados
+
+| Nombre | Tipo | Columnas | Condición parcial | Query cubierta |
+|--------|------|----------|-------------------|----------------|
+| `idx_productos_subcategoria_id` | B-tree | `subcategoria_id` | — | JOIN FK (creado en schema inicial) |
+| `idx_productos_activos` | B-tree parcial | `(subcategoria_id, created_at DESC)` | `WHERE activo = TRUE` | Q1 — catálogo por categoría |
+| `idx_productos_created_at_desc` | B-tree | `created_at DESC` | — | Q2 — badge "NUEVO" (últimos 14 días) |
+
+Los índices `idx_productos_activos` e `idx_productos_created_at_desc` se aplican con:
+
+```bash
+npx sequelize-cli db:migrate
+# aplica 20250520130000-add-catalog-indexes.js
+```
+
+### Cómo reproducir los experimentos
+
+Los archivos SQL están en `db/experiments/` y deben ejecutarse en orden:
+
+```
+# 1. Verificar entorno (filas, índices existentes, tamaños)
+psql $DATABASE_URL -f db/experiments/00_setup.sql
+
+# 2. Capturar planes SIN índices nuevos (baseline)
+psql $DATABASE_URL -f db/experiments/01_baseline.sql
+
+# 3. Crear los índices de experimentación
+psql $DATABASE_URL -f db/experiments/02_create_indexes.sql
+
+# 4. Capturar planes CON índices — comparar con paso 2
+psql $DATABASE_URL -f db/experiments/03_with_indexes.sql
+
+# 5. Opcional: volver al estado baseline para repetir
+psql $DATABASE_URL -f db/experiments/04_drop_indexes.sql
+```
+
+> En Windows con Railway, agregar al `.env`: `DATABASE_SSL=true`  
+> Antes de correr los EXPLAIN, asegurarse de que el seeder de Persona B ya cargó datos de volumen.
+
+### Queries analizadas
+
+| ID | Descripción | Esperado sin índice | Esperado con índice |
+|----|-------------|--------------------|--------------------|
+| Q1 | Catálogo activo filtrado por categoría, orden por fecha | Seq Scan + Sort | Index Scan / Bitmap Index Scan |
+| Q2 | Productos nuevos (últimos 14 días), activos | Seq Scan + Filter + Sort | Index Scan sin Sort extra |
+| Q3 | Panel admin: todos los productos con join | Seq Scan + Sort | Sort evitado en parte por `idx_created_at_desc` |
+
 
 **Notas:** en el DDL, `productos.images` es `text[]` (galería de URLs); el diagrama lo resume como `text` por compatibilidad con Mermaid. Los slugs en `categorias` y `subcategorias` equivalen a los filtros `cat` y `sub` del frontend; la vista `v_productos_catalogo` expone además `name` y `price` a partir de `nombre` y `precio`. Los índices extra para la actividad de rendimiento y `EXPLAIN ANALYZE` se aplican aparte (ver `Actividad_indices.md`).
