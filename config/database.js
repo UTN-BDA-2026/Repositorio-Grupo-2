@@ -1,8 +1,29 @@
 require('dotenv').config();
 
-const useSsl =
+function isLocalDatabaseHost(hostname) {
+  if (!hostname) return true;
+  const h = String(hostname).toLowerCase();
+  return h === 'localhost' || h === '127.0.0.1' || h === '::1';
+}
+
+const hasDatabaseUrl =
+  process.env.DATABASE_URL != null && process.env.DATABASE_URL !== '';
+
+let useSsl =
   process.env.DATABASE_SSL === 'true' ||
   process.env.NODE_ENV === 'production';
+
+if (hasDatabaseUrl) {
+  try {
+    const u = new URL(process.env.DATABASE_URL);
+    if (isLocalDatabaseHost(u.hostname)) useSsl = false;
+  } catch (_) {
+    /* URL inválida: sequelize fallará después con un error claro */
+  }
+} else {
+  const host = process.env.DB_HOST || '127.0.0.1';
+  if (isLocalDatabaseHost(host)) useSsl = false;
+}
 
 const dialectOptions = useSsl
   ? {
@@ -19,8 +40,7 @@ const common = {
   logging: process.env.SEQUELIZE_LOGGING === 'true' ? console.log : false,
 };
 
-const development =
-  process.env.DATABASE_URL != null && process.env.DATABASE_URL !== ''
+const development = hasDatabaseUrl
     ? { ...common, use_env_variable: 'DATABASE_URL' }
     : {
         ...common,
@@ -34,8 +54,7 @@ const development =
 module.exports = {
   development,
   test: development,
-  production:
-    process.env.DATABASE_URL != null && process.env.DATABASE_URL !== ''
+  production: hasDatabaseUrl
       ? { ...common, use_env_variable: 'DATABASE_URL' }
       : development,
 };
