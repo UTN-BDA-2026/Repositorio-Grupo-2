@@ -1,0 +1,104 @@
+{
+  "title": "Métricas de rendimiento — PostgreSQL",
+  "subtitle": "Experimento EXPLAIN ANALYZE · índices en catálogo AGUSTINA",
+  "measuredAt": "2026-05",
+  "environment": {
+    "counts": [
+      { "table": "categorias", "rows": 10 },
+      { "table": "subcategorias", "rows": 22 },
+      { "table": "productos", "rows": 15000 }
+    ],
+    "sizes": {
+      "total": "5880 kB",
+      "table": "4504 kB",
+      "indexes": "1336 kB"
+    }
+  },
+  "indexes": [
+    {
+      "name": "idx_productos_subcategoria_id",
+      "description": "JOIN FK subcategoría → productos",
+      "partial": false
+    },
+    {
+      "name": "idx_productos_activos",
+      "description": "Catálogo activo por subcategoría, orden por fecha",
+      "partial": true,
+      "condition": "WHERE activo = TRUE"
+    },
+    {
+      "name": "idx_productos_created_at_desc",
+      "description": "Badge NUEVO y listados ordenados por fecha",
+      "partial": false
+    }
+  ],
+  "queries": [
+    {
+      "id": "Q1",
+      "label": "Catálogo activo por categoría",
+      "description": "Productos activos de indumentaria, ordenados por created_at DESC.",
+      "baseline": {
+        "planningMs": 0.448,
+        "executionMs": 3.642,
+        "buffersHit": 2266,
+        "buffersRead": 0,
+        "rootNode": "Sort"
+      },
+      "withIndexes": {
+        "planningMs": 0.314,
+        "executionMs": 3.293,
+        "buffersHit": 2263,
+        "buffersRead": 0,
+        "rootNode": "Sort"
+      },
+      "highlight": "Mejora leve; el sort sigue siendo el nodo raíz."
+    },
+    {
+      "id": "Q2",
+      "label": "Badge NUEVO (14 días)",
+      "description": "Productos activos creados en los últimos 14 días.",
+      "baseline": {
+        "planningMs": 0.095,
+        "executionMs": 2.518,
+        "buffersHit": 563,
+        "buffersRead": 0,
+        "rootNode": "Seq Scan"
+      },
+      "withIndexes": {
+        "planningMs": 0.204,
+        "executionMs": 0.023,
+        "buffersHit": 2,
+        "buffersRead": 0,
+        "rootNode": "Index Scan"
+      },
+      "highlight": "Mayor impacto: de Seq Scan + Sort a Index Scan (~109× más rápido)."
+    },
+    {
+      "id": "Q3",
+      "label": "Panel admin (join completo)",
+      "description": "Todos los productos con join a categorías y subcategorías.",
+      "baseline": {
+        "planningMs": 0.212,
+        "executionMs": 14.947,
+        "buffersHit": 565,
+        "buffersRead": 0,
+        "rootNode": "Sort"
+      },
+      "withIndexes": {
+        "planningMs": 0.171,
+        "executionMs": 14.679,
+        "buffersHit": 15066,
+        "buffersRead": 40,
+        "rootNode": "Nested Loop"
+      },
+      "highlight": "Tiempo similar; el índice evita sort global usando idx_created_at_desc."
+    }
+  ],
+  "reproduce": [
+    "npm run db:setup",
+    "psql $DATABASE_URL -f db/experiments/01_baseline.sql",
+    "psql $DATABASE_URL -f db/experiments/02_create_indexes.sql",
+    "psql $DATABASE_URL -f db/experiments/03_with_indexes.sql",
+    "npm run informe:c"
+  ]
+}
