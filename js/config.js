@@ -1,4 +1,5 @@
-const API_URL = "https://api-agustina.juaniperez1243.workers.dev";
+/** API local (server.js). Sin dependencia de Cloudflare/Vercel. */
+const API_URL = "/api";
 
 function cloudinaryUrl(url, w = 800) {
   if (!url || !url.includes("cloudinary.com")) return url;

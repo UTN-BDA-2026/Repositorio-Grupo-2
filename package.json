@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "Esquema PostgreSQL + Sequelize (migraciones/modelos) para el proyecto BD Avanzada",
   "scripts": {
+    "dev": "node server.js",
+    "export:products": "node scripts/export-demo-products.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
@@ -21,6 +23,7 @@
     "sequelize": "^6.37.5"
   },
   "devDependencies": {
+    "live-server": "^1.2.2",
     "sequelize-cli": "^6.6.2"
   }
 }

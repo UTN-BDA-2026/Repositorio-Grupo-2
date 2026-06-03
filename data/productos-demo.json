@@ -1,0 +1,309 @@
+[
+  {
+    "id": 63,
+    "name": "REMERA ARGENTINA",
+    "price": 17000,
+    "precio_efectivo": 17000,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061613/dmuawlmmnkispq7htthr.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061613/dmuawlmmnkispq7htthr.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061610/rdcjeyjib0fqz8jfhw1q.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061610/ddf7juvacx0bxxrf6iwf.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061613/dfhgg6fsotlndfrheuf6.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1780061614/i4b3wnmasqxgyfwwbjea.png"
+    ],
+    "descripcion": "Consulta por los diseños disponibles",
+    "created_at": "2026-05-29 13:33:36"
+  },
+  {
+    "id": 62,
+    "name": "BRUMA FACIAL",
+    "price": 8200,
+    "precio_efectivo": 7380,
+    "cat": "skincare",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396855/bu7uebue20rs8x9cclka.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396855/bu7uebue20rs8x9cclka.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-21 20:54:16"
+  },
+  {
+    "id": 61,
+    "name": "CONTORNO DE OJOS MELY",
+    "price": 7200,
+    "precio_efectivo": 6480,
+    "cat": "skincare",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396786/wk9rfpr9ifocbafhpnxj.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396786/wk9rfpr9ifocbafhpnxj.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-21 20:53:07"
+  },
+  {
+    "id": 60,
+    "name": "ESPUMA DE LIMPIEZA MELY",
+    "price": 7900,
+    "precio_efectivo": 7110,
+    "cat": "skincare",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396758/hmyuhelyc7epie6olkuf.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396758/hmyuhelyc7epie6olkuf.png"
+    ],
+    "descripcion": "U",
+    "created_at": "2026-05-21 20:52:40"
+  },
+  {
+    "id": 59,
+    "name": "CERA PARA EL PELO",
+    "price": 6600,
+    "precio_efectivo": 5940,
+    "cat": "skincare",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396673/dyutziw4ior2aorpnonu.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779396673/dyutziw4ior2aorpnonu.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-21 20:51:14"
+  },
+  {
+    "id": 58,
+    "name": "BUFANDON MAN03",
+    "price": 18900,
+    "precio_efectivo": null,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779203260/l1j8zj33xfh4xtdsoovl.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779203260/l1j8zj33xfh4xtdsoovl.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779203260/erblxfdjgg4srkyq5khq.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779203258/cw0vfpx6hjwt8fdiojkn.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-19 15:07:41"
+  },
+  {
+    "id": 57,
+    "name": "VASO TÉRMICO CON MEDIDOR DE TEMPERATURA",
+    "price": 31900,
+    "precio_efectivo": 28710,
+    "cat": "botellas-y-vasos",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531496/zhwnw2wdcduyigrz16qu.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531496/zhwnw2wdcduyigrz16qu.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531497/mndcm80o4peqzzkvmhlt.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531504/b1icu9aontffk7yzdzix.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531496/p5noewpqger7hyvbd0la.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778531496/oypsx2jtojm2fye2wndg.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-11 20:32:44"
+  },
+  {
+    "id": 56,
+    "name": "CAJA SORPRESA ZOOTOPIA",
+    "price": 27900,
+    "precio_efectivo": 25110,
+    "cat": "regaleria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778529178/ep59meyfa9ialxpg0lji.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778529178/ep59meyfa9ialxpg0lji.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-11 19:52:59"
+  },
+  {
+    "id": 55,
+    "name": "FOAMY MOLDEABLE X36",
+    "price": 10200,
+    "precio_efectivo": 9200,
+    "cat": "regaleria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778513465/jafglomb6osthju5esh1.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778513465/jafglomb6osthju5esh1.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-11 15:31:07"
+  },
+  {
+    "id": 54,
+    "name": "FOAMY MOLDEABLE X 24",
+    "price": 7300,
+    "precio_efectivo": 6600,
+    "cat": "regaleria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778512603/zswa7xo1ofug1blllvpq.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778512603/zswa7xo1ofug1blllvpq.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-11 15:16:44"
+  },
+  {
+    "id": 53,
+    "name": "FOAMY MOLDEABLE X 12",
+    "price": 3900,
+    "precio_efectivo": 3510,
+    "cat": "regaleria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778512553/ixggwfdfipb5tka6dmxu.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778512553/ixggwfdfipb5tka6dmxu.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-11 15:15:55"
+  },
+  {
+    "id": 52,
+    "name": "CHALECO REVERSIBLE",
+    "price": 69900,
+    "precio_efectivo": 55920,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778364751/jfsdknpwprhl5fl6ks2f.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778364751/jfsdknpwprhl5fl6ks2f.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778364754/rjgvwyknpmfcmoge8phe.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778364755/brj9hee25qptqyvf4mqn.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778364756/uonkphjjwbbwnpcdnc5g.png"
+    ],
+    "descripcion": "Chaleco reversible. Disponible tambien en color negro",
+    "created_at": "2026-05-09 21:59:01"
+  },
+  {
+    "id": 51,
+    "name": "SWEATER SW52",
+    "price": 47900,
+    "precio_efectivo": 43110,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778102489/eubt7tz3iloybjqxcmun.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778102489/eubt7tz3iloybjqxcmun.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778102487/xclnrjqfzijdlhj5u8qq.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-06 21:21:30"
+  },
+  {
+    "id": 50,
+    "name": "SWEATER SW58",
+    "price": 51900,
+    "precio_efectivo": 46710,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778101118/cu4hxo1xcmeialagzamu.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778101118/cu4hxo1xcmeialagzamu.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778101144/rft8fek5fucqeqns1uo5.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-06 20:59:07"
+  },
+  {
+    "id": 49,
+    "name": "SWEATER SW55",
+    "price": 31900,
+    "precio_efectivo": 28710,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100659/xsozp1ad9r5uo9gr8tiy.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100659/xsozp1ad9r5uo9gr8tiy.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100655/jmnghfscucwygopsucti.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-06 20:51:01"
+  },
+  {
+    "id": 48,
+    "name": "SWEATER SW55",
+    "price": 51900,
+    "precio_efectivo": 46710,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100243/cxbhzgf7rfyazosm7ofe.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100243/cxbhzgf7rfyazosm7ofe.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100244/wayemhh0mt7vto4u2ui9.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778100236/gijlxslewis9qdu9o4j8.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-06 20:44:05"
+  },
+  {
+    "id": 47,
+    "name": "SWEATER SW57",
+    "price": 48900,
+    "precio_efectivo": 44010,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778099143/v55r8agbnzbnumaulr4b.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778099143/v55r8agbnzbnumaulr4b.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1778099153/vlfqlzagobesfimdtg5f.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-06 20:25:57"
+  },
+  {
+    "id": 46,
+    "name": "BUFANDÓN LONDRES",
+    "price": 16200,
+    "precio_efectivo": 14580,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202326/yjxouakyxjx7rcll3chk.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202326/yjxouakyxjx7rcll3chk.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202329/dcbytism4jkglhjxbwdx.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202329/i7636j8ipcpwaw97vham.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202329/plbpagmxemb4fytbdpwl.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202329/jdgj0vpck8tdq0kuvohb.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202330/bo3jys9gpfvlj4fxy0ch.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1779202336/qro9cct9yjujjg026rw5.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-05 13:50:26"
+  },
+  {
+    "id": 45,
+    "name": "BUFANDON ANIMAL",
+    "price": 21900,
+    "precio_efectivo": 19710,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988717/db5mkxzq9olmkj5scssw.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988717/db5mkxzq9olmkj5scssw.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988721/jdrqg2ikditdrorwxkkq.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-05 13:45:22"
+  },
+  {
+    "id": 44,
+    "name": "BUFANDON JANIS",
+    "price": 21900,
+    "precio_efectivo": 19710,
+    "cat": "indumentaria",
+    "sub": "",
+    "image_url": "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988656/aexlfunmbyeeuikrixhi.png",
+    "images": [
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988656/aexlfunmbyeeuikrixhi.png",
+      "https://res.cloudinary.com/dk7nxmdcg/image/upload/v1777988658/luo5jqzigi8dysfr1kxy.png"
+    ],
+    "descripcion": null,
+    "created_at": "2026-05-05 13:44:20"
+  }
+]
