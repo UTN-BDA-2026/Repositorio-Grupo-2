@@ -263,6 +263,55 @@ $env:SEED_PRODUCT_COUNT=50000; npm run db:seed
 
 ---
 
+## Importar productos demo desde JSON
+
+Script **opcional** para cargar el catálogo de muestra (`data/productos-demo.json`) en PostgreSQL. **No** forma parte de `db:setup`, `db:seed` ni del arranque del servidor: solo corre cuando lo invocás explícitamente.
+
+**Requisitos previos:** `.env` con `DATABASE_URL`, taxonomía cargada (`npm run db:seed` o al menos el seeder de categorías/subcategorías).
+
+### Funcionalidad
+
+| Aspecto | Detalle |
+|---------|---------|
+| Origen | `data/productos-demo.json` (array con `name`, `price`, `cat`, `sub`, `image_url`, etc.) |
+| Destino | Tabla `productos`, resolviendo `subcategoria_id` por slugs `cat`/`sub` |
+| Marcador | Prefijo **`[demo-json]`** en `nombre` (mismo criterio que `[seed-exp]` en seeds) |
+| Transacción | Toda la importación en una transacción ACID; error → ROLLBACK |
+| Aislamiento | No modifica seeders, API ni archivos del frontend |
+
+Los productos importados se ven en el catálogo vía la API local (`npm run dev`). El prefijo `[demo-json]` permite identificarlos y borrarlos sin tocar productos reales ni los de experimento `[seed-exp]`.
+
+### Comandos
+
+```bash
+# Importar omitiendo filas [demo-json] que ya existan (idempotente)
+npm run db:import-demo
+
+# Reimportar desde cero: borra [demo-json] previos e inserta de nuevo
+npm run db:import-demo -- --clean
+
+# Simular sin escribir en la base
+npm run db:import-demo -- --dry-run
+
+# Usar otro archivo JSON
+npm run db:import-demo -- --file ruta/productos.json
+
+# Eliminar solo productos importados por este script
+npm run db:import-demo:undo
+```
+
+**PowerShell (archivo custom):**
+
+```powershell
+npm run db:import-demo -- --file data/productos-demo.json
+```
+
+Variable opcional: `DEMO_IMPORT_FILE` (ruta por defecto al JSON si no pasás `--file`).
+
+Script: [`scripts/import-demo-products.js`](scripts/import-demo-products.js).
+
+---
+
 ## Errores frecuentes
 
 | Síntoma | Solución |
@@ -290,6 +339,8 @@ $env:SEED_PRODUCT_COUNT=50000; npm run db:seed
 │   ├── models/
 │   └── experiments/       # Scripts EXPLAIN
 ├── js/                    # Frontend (catálogo, admin, carrito)
+├── data/productos-demo.json   # Catálogo demo (import opcional con db:import-demo)
+├── scripts/import-demo-products.js
 ├── docs/BACKUP_RESTORE.md
 ├── informe/               # Informes de rendimiento
 └── tests/                 # Tests unitarios / integración
@@ -305,6 +356,8 @@ $env:SEED_PRODUCT_COUNT=50000; npm run db:seed
 | `npm run db:migrate` | Aplicar migraciones |
 | `npm run db:seed` | Cargar seeds |
 | `npm run db:setup` | Migrate + seed |
+| `npm run db:import-demo` | Importar `data/productos-demo.json` a PostgreSQL (opcional) |
+| `npm run db:import-demo:undo` | Quitar productos importados con prefijo `[demo-json]` |
 | `npm run db:backup` | Crear backup |
 | `npm run informe:c` | Generar salidas EXPLAIN para informe C |
 | `npm test` | Ejecutar tests (backup + transacciones si hay `DATABASE_URL`) |

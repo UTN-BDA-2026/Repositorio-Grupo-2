@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "node server.js",
     "export:products": "node scripts/export-demo-products.js",
+    "db:import-demo": "node scripts/import-demo-products.js",
+    "db:import-demo:undo": "node scripts/import-demo-products.js --undo",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
