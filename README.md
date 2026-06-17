@@ -1,124 +1,158 @@
-📊 Proyecto de Base de Datos Avanzada  
-Grupo 2  
+# AGUSTINA — Proyecto Base de Datos Avanzada
 
-👥 Integrantes  
-Conforti, Angelo  
-Contreras, Facundo  
-Perez, Juan Ignacio  
-Romero, Tomas  
-Vergara, Juan Ignacio  
+Catálogo e-commerce de moda y accesorios con **PostgreSQL**, panel de administración, experimentos de rendimiento (índices / `EXPLAIN ANALYZE`), backup-restore y **transacciones ACID** en operaciones críticas del catálogo.
 
-📌 Descripción del Proyecto  
-Este repositorio contiene el desarrollo del proyecto correspondiente a la materia Base de Datos Avanzada, cuyo objetivo principal es aplicar de forma práctica los conceptos teóricos aprendidos durante el cursado.  
-
-El proyecto busca diseñar, implementar y gestionar una base de datos robusta, eficiente y escalable, incorporando herramientas y técnicas avanzadas del manejo de datos.  
+**Grupo 2:** Conforti Angelo · Contreras Facundo · Perez Juan Ignacio · Romero Tomas · Vergara Juan Ignacio
 
 ---
 
-🌸 Web Agustina
+## Descripción
 
-Sitio web moderno y minimalista desarrollado para AGUSTINA, un emprendimiento de moda femenina. Funciona como catálogo online con panel de administración, integrado con Cloudflare R2 para almacenamiento de imágenes y Cloudflare Workers como backend.
+El proyecto modela el negocio de **AGUSTINA**: categorías, subcategorías y productos normalizados en PostgreSQL. Un servidor Node.js expone una **API REST local** que alimenta el frontend estático (catálogo, detalle de producto y admin). Las imágenes se suben a Cloudinary desde el navegador; los metadatos y precios viven en la base de datos.
 
-🔗 Demo en vivo: [https://web-agustina.vercel.app/](https://web-agustina.vercel.app/)
-
-✨ Características
-
-- Diseño responsive para móviles, tablets y computadoras
-- Catálogo de productos dinámico con filtros por categoría
-- Panel de administración para gestión de productos
-- Compresión y conversión de imágenes a WebP automática
-- Integración con Cloudflare R2 y Workers
+El DDL canónico está en [`db/schema.sql`](db/schema.sql). Las migraciones Sequelize aplican ese esquema para mantener repo y base alineados.
 
 ---
 
-## Base de datos (PostgreSQL + Sequelize)
+## Tecnologías utilizadas
 
-El DDL canónico está en `db/schema.sql`. Las migraciones aplican ese archivo para que el esquema y el repo no diverjan.
+| Capa | Tecnología |
+|------|------------|
+| Base de datos | **PostgreSQL** (Railway u otro host) |
+| ORM / migraciones | **Sequelize 6** + **sequelize-cli** |
+| Backend local | **Node.js 18+** (`server.js`, HTTP nativo) |
+| Frontend | HTML5, CSS3, JavaScript vanilla |
+| Animaciones | GSAP 3 + ScrollTrigger |
+| Imágenes | Cloudinary (upload desde el admin) |
+| Backup | `pg_dump` / `pg_restore` vía módulo `lib/backup/` |
+| Tests | Node.js built-in test runner (`node --test`) |
 
-### Requisitos
+---
 
-- Node.js 18+
-- PostgreSQL (p. ej. instancia en Railway)
+## Requisitos previos
 
-### Setup (rápido)
+- **Node.js 18 o superior** (`node -v`)
+- **PostgreSQL** accesible (instancia compartida del grupo, p. ej. Railway)
+- **Cliente PostgreSQL** en PATH para backup/restore: `pg_dump`, `pg_restore`, `psql` (opcional salvo módulo backup)
+- Credenciales de conexión (`DATABASE_URL`) provistas por el docente o el grupo
 
-1. Copiar variables de entorno a `.env` y pegar `DATABASE_URL` (la que pasó el docente / Railway):
-  - **PowerShell:** `Copy-Item .env.example .env`
-  - **cmd:** `copy .env.example .env`
-  - **bash:** `cp .env.example .env`
-2. Si conectan a **Railway desde Windows**, en `.env` dejar `**DATABASE_SSL=true`** (ver la sección *Errores típicos al migrar* más abajo).
-3. En la carpeta del repo: `npm install`
-4. Aplicar **estructura** (tablas y vista, sin filas de negocio): `npx sequelize-cli db:migrate` (equivalente: `npm run db:migrate`).
-5. Cargar **datos** (categorías, subcategorías y productos de experimento): `npx sequelize-cli db:seed:all` (equivalente: `npm run db:seed`). Sin este paso, en Railway las tablas van a existir pero **van a verse vacías**; no es un fallo de la migración.
+---
 
-**Atajo:** `npm run db:setup` hace migrate + seed en un solo comando (útil en una PC nueva con `.env` ya configurado).
+## Instalación y configuración
 
-Si algo falla: avisar con **captura del error** y **qué paso** estaban haciendo (por ejemplo: “después de `npm install`, al correr migrate”).
-
-### Flujo Git (grupo)
-
-- Trabajar en **rama propia**; integrar en `main` vía **PR** (pull request).
-- Mensajes de commit claros, por ejemplo: `feat(seed): …`, `docs(readme): …`, `fix(db): …`.
-
-### Uso de modelos (Node)
-
-```js
-const db = require('./db/models');
-// db.Categoria, db.Subcategoria, db.Producto, db.sequelize
-```
-
-La vista `v_productos_catalogo` existe solo en PostgreSQL; para consultarla con Sequelize usá `db.sequelize.query` con SQL crudo o definí un modelo `sequelize.define` con `tableName: 'v_productos_catalogo'`, `timestamps: false` (opcional).
-
-### Seeds (volumen para EXPLAIN / índices)
-
-Después de `db:migrate`. Hay dos seeders en orden:
-
-1. `20250511140001-seed-catalogo-taxonomia.js` — categorías y subcategorías (slugs alineados al esquema y al admin).
-2. `20250511140002-seed-experiment-productos-bulk.js` — muchos productos sintéticos; el `nombre` empieza con `[seed-exp]` para poder borrarlos sin mezclar con datos reales.
-
-**Cantidad de productos:** variable de entorno `SEED_PRODUCT_COUNT` (default **15000**; tope **500000**). `0` omite la inserción masiva. Acordá un `N` razonable para Railway (probar 15k → 50k).
+### 1. Clonar e instalar dependencias
 
 ```bash
-npx sequelize-cli db:seed:all
-npm run db:seed
-npm run db:setup   # migrate + seed:all (misma sesión)
+git clone <url-del-repo>
+cd Repositorio-Grupo-2
+npm install
 ```
 
-Con volumen alto (ej. 50k), en **PowerShell:** `$env:SEED_PRODUCT_COUNT=50000; npx sequelize-cli db:seed:all` · **cmd:** `set SEED_PRODUCT_COUNT=50000&& npx sequelize-cli db:seed:all` · **bash:** `SEED_PRODUCT_COUNT=50000 npx sequelize-cli db:seed:all`
+### 2. Variables de entorno
 
-Opcional: solo taxonomía — `npx sequelize-cli db:seed --seed 20250511140001-seed-catalogo-taxonomia.js`
+Copiar el ejemplo y completar la URL de Postgres:
 
-Revertir último seed: `npx sequelize-cli db:seed:undo` (repetir para deshacer ambos en orden inverso) o `npm run db:seed:undo` para todos.
+| Shell | Comando |
+|-------|---------|
+| PowerShell | `Copy-Item .env.example .env` |
+| cmd | `copy .env.example .env` |
+| bash | `cp .env.example .env` |
 
-Para **volver a cargar solo** el volumen `[seed-exp]` después de haber corrido los dos seeders: `npx sequelize-cli db:seed:undo` (saca el bulk), luego `npx sequelize-cli db:seed --seed 20250511140002-seed-experiment-productos-bulk.js`.
+Editar `.env`:
 
-**Atención:** el `down` del seeder de taxonomía borra primero `productos` con nombre `[seed-exp] %` y luego subcategorías/categorías listadas. Si cargaron **productos reales** en esas mismas filas de catálogo, coordinen antes de hacer `db:seed:undo:all`.
+```env
+DATABASE_URL=postgresql://usuario:password@host:puerto/base
+DATABASE_SSL=true
+```
 
-Podés documentar `SEED_PRODUCT_COUNT` en `.env` (ver `.env.example`).
+> **Windows + Railway:** dejar `DATABASE_SSL=true`. Si aparece error de certificado autofirmado, no activar `DATABASE_SSL_REJECT_UNAUTHORIZED=true` salvo indicación del docente.
 
-**Prompt sugerido (IA):** «Tablas `categorias`, `subcategorias`, `productos` según `db/schema.sql`. Necesito un seeder Sequelize que inserte X filas realistas (slugs, precios, `activo`, `created_at` variado) sin romper FKs. Incluir cómo ejecutarlo con `sequelize-cli db:seed:all`.»
+Variables opcionales útiles:
 
-### Errores típicos al migrar
+| Variable | Default | Uso |
+|----------|---------|-----|
+| `PORT` | `5173` | Puerto del servidor local |
+| `SEED_PRODUCT_COUNT` | `15000` | Filas sintéticas para experimentos de índices |
+| `OPEN_BROWSER` | abre navegador | `false` para no abrir al iniciar |
+| `BACKUP_DIR` | `./backups` | Carpeta de respaldos |
 
+Ver [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md) para el resto de variables de backup.
 
-| Síntoma                                                                            | Qué revisar                                                                                                                                                                                  |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `self-signed certificate in certificate chain` / errores TLS al conectar a Railway | En `.env`: `DATABASE_SSL=true`. Si sigue fallando, confirmar que `DATABASE_SSL_REJECT_UNAUTHORIZED` **no** esté en `true` salvo que el docente lo pida.                                      |
-| `ECONNREFUSED` / timeout                                                           | `DATABASE_URL` correcta (host/puerto/user/password). Firewall o VPN bloqueando el puerto de Postgres.                                                                                        |
-| `password authentication failed`                                                   | Usuario o contraseña de la URL incorrectos; volver a copiar la variable desde Railway.                                                                                                       |
-| `Node` no encontrado o paquetes raros                                              | Node **18+** (`node -v`). Borrar `node_modules` y `package-lock.json` solo si acordaron regenerar lock; en general: `npm install` de nuevo.                                                  |
-| `relation "categorias" already exists` / migración a medias                        | Alguien ya aplicó el esquema: `npx sequelize-cli db:migrate:status`. Si hace falta revertir en **dev**: `npm run db:migrate:undo` (solo si es seguro; si hay datos, coordinar con el grupo). |
-| `DATABASE_URL` vacía o sin pegar                                                   | El archivo debe llamarse `.env` (con punto) y estar en la **raíz** del repo; `DATABASE_URL=` debe tener la URL completa sin comillas.                                                        |
-| En Railway las tablas existen pero **están vacías** (0 filas)                    | Es lo esperado si solo corrieron `db:migrate`. La migración crea el esquema; los INSERT van por **seeders**: `npx sequelize-cli db:seed:all` (ver sección *Seeds*). Si `SEED_PRODUCT_COUNT=0`, el bulk de productos se omite pero la taxonomía sí se carga. |
+### 3. Crear esquema y datos iniciales
 
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+**Atajo (migrate + seed):**
+
+```bash
+npm run db:setup
+```
+
+Sin el paso de **seed**, las tablas existen pero pueden verse vacías en el catálogo (solo taxonomía + productos de experimento `[seed-exp]`).
 
 ---
 
-## Modelo de datos (PostgreSQL)
+## Guía de ejecución
 
-El DDL versionado vive en `[db/schema.sql](db/schema.sql)`. Resume el negocio del catálogo **AGUSTINA**: categorías y subcategorías normalizadas, y productos con precios, imágenes, descripción, vigencia (`activo`) y auditoría de fechas. La vista `v_productos_catalogo` proyecta columnas alineadas al JSON que consume el sitio (`name`, `price`, `cat`, `sub`, etc.).
+### Servidor de desarrollo
 
-### Diagrama entidad–relación
+```bash
+npm run dev
+```
+
+Abre automáticamente:
+
+| URL | Contenido |
+|-----|-----------|
+| http://127.0.0.1:5173/ | Catálogo público |
+| http://127.0.0.1:5173/admin.html | Panel admin (contraseña demo: `1234`) |
+| http://127.0.0.1:5173/metricas.html | Métricas e informes de rendimiento |
+
+Si `DATABASE_URL` no está configurada, la API responde **503** con un mensaje claro.
+
+### API REST local
+
+Toda la persistencia del catálogo pasa por PostgreSQL (ya no se usa `data/productos-demo.json` en runtime).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/api/productos` | Catálogo público (`activo = true`) |
+| `GET` | `/api/producto?id=` | Detalle de un producto |
+| `GET` | `/api/admin/productos` | Listado admin (incluye inactivos) |
+| `POST` | `/api/guardar-producto` | Alta de producto |
+| `PATCH` | `/api/producto` | Actualización parcial |
+| `DELETE` | `/api/producto` | Eliminación |
+| `GET` | `/api/metricas` | Datos para la página de métricas |
+
+Contrato JSON alineado a la vista `v_productos_catalogo`: `id`, `name`, `price`, `precio_efectivo`, `cat`, `sub`, `image_url`, `images`, `descripcion`, `activo`, `created_at`, `updated_at`.
+
+### Backup y restore
+
+```bash
+npm run db:backup
+npm run db:backup:list
+npm run db:backup:restore -- <id>
+npm test
+```
+
+Documentación completa: [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md).
+
+### Experimentos de índices (EXPLAIN)
+
+Scripts en [`db/experiments/`](db/experiments/). Requieren datos de volumen (`SEED_PRODUCT_COUNT`).
+
+```bash
+npm run informe:c
+```
+
+Informes del grupo: [`informe/seccion_C.md`](informe/seccion_C.md), [`informe/seccion_D.md`](informe/seccion_D.md), [`informe/seccion_E.md`](informe/seccion_E.md).
+
+---
+
+## Modelo de datos
 
 ```mermaid
 erDiagram
@@ -127,14 +161,14 @@ erDiagram
 
     categorias {
         smallserial id PK
-        varchar slug UK "slug catálogo"
+        varchar slug UK
         varchar nombre
     }
 
     subcategorias {
         serial id PK
         smallint categoria_id FK
-        varchar slug "slug sub"
+        varchar slug
         varchar nombre
     }
 
@@ -153,69 +187,139 @@ erDiagram
     }
 ```
 
+La vista `v_productos_catalogo` proyecta slugs `cat`/`sub` y campos `name`/`price` para el frontend.
 
 ---
 
-## Informe de rendimiento e índices
+## Temas de la cursada implementados
 
-### Índices implementados
+Referencia rápida para la corrección: **qué** se implementó y **dónde** está en el repo.
 
-| Nombre | Tipo | Columnas | Condición parcial | Query cubierta |
-|--------|------|----------|-------------------|----------------|
-| `idx_productos_subcategoria_id` | B-tree | `subcategoria_id` | — | JOIN FK (creado en schema inicial) |
-| `idx_productos_activos` | B-tree parcial | `(subcategoria_id, created_at DESC)` | `WHERE activo = TRUE` | Q1 — catálogo por categoría |
-| `idx_productos_created_at_desc` | B-tree | `created_at DESC` | — | Q2 — badge "NUEVO" (últimos 14 días) |
+### 1. Modelado y normalización
 
-Los índices `idx_productos_activos` e `idx_productos_created_at_desc` se aplican con:
+- **Dónde:** [`db/schema.sql`](db/schema.sql), migración [`db/migrations/20250511120000-init-agustina-schema.js`](db/migrations/20250511120000-init-agustina-schema.js), modelos en [`db/models/`](db/models/).
+- **Qué:** Tres entidades normalizadas (categorías → subcategorías → productos), constraints `CHECK`, unicidades, FKs con `ON DELETE RESTRICT`, vista de proyección al JSON del frontend.
 
-```bash
-npx sequelize-cli db:migrate
-# aplica 20250520130000-add-catalog-indexes.js
+### 2. Índices y optimización de consultas
+
+- **Dónde:** migración [`db/migrations/20250520130000-add-catalog-indexes.js`](db/migrations/20250520130000-add-catalog-indexes.js), scripts [`db/experiments/`](db/experiments/), informes [`informe/seccion_C.md`](informe/seccion_C.md) y [`informe/seccion_E.md`](informe/seccion_E.md).
+- **Qué:** Índices B-tree parciales y de ordenamiento; batería reproducible de `EXPLAIN (ANALYZE, BUFFERS)`; seeder de volumen [`db/seeders/20250511140002-seed-experiment-productos-bulk.js`](db/seeders/20250511140002-seed-experiment-productos-bulk.js).
+
+| Índice | Columnas | Uso |
+|--------|----------|-----|
+| `idx_productos_subcategoria_id` | `subcategoria_id` | JOIN por FK |
+| `idx_productos_activos` | `(subcategoria_id, created_at DESC)` WHERE `activo` | Catálogo por categoría |
+| `idx_productos_created_at_desc` | `created_at DESC` | Badge “NUEVO” |
+
+### 3. Backup y restore
+
+- **Dónde:** [`lib/backup/`](lib/backup/), CLI [`scripts/db-backup-cli.js`](scripts/db-backup-cli.js), docs [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md), tests [`tests/backup.test.js`](tests/backup.test.js).
+- **Qué:** Respaldos formato custom o plain comprimido, manifiesto con checksum SHA-256, validación de integridad, política de retención y restore con confirmación.
+
+### 4. Seguridad
+
+- **Dónde:** [`config/database.js`](config/database.js), [`.env.example`](.env.example), constraints del DDL.
+- **Qué:** Credenciales fuera del código (`.env`, ignorado por git); conexión TLS a Railway (`DATABASE_SSL`); integridad referencial (`RESTRICT`); validación de slugs en CHECK.  
+  **Nota:** la contraseña del admin en el frontend (`admin.html`) es solo demo local; en producción la autenticación debería moverse al servidor.
+
+### 5. Transacciones ACID
+
+- **Dónde:** [`lib/catalog/product-service.js`](lib/catalog/product-service.js), rutas en [`server.js`](server.js), seeders en [`db/seeders/`](db/seeders/), tests [`tests/transactions.test.js`](tests/transactions.test.js).
+- **Qué:** Operaciones multi-paso envueltas en `sequelize.transaction()` con **COMMIT** automático al éxito y **ROLLBACK** ante cualquier error.
+
+| Flujo | Operaciones atómicas | Archivo |
+|-------|----------------------|---------|
+| Alta de producto | Resolver `cat`/`sub` → `subcategoria_id` + `INSERT` | `lib/catalog/product-service.js` → `createProduct` |
+| Actualización | `SELECT … FOR UPDATE` + re-resolución FK + `UPDATE` | `updateProduct` |
+| Eliminación | Bloqueo de fila + `DELETE` | `deleteProduct` |
+| Seed taxonomía | `INSERT` categorías + subcategorías; `down`: deletes encadenados | `20250511140001-seed-catalogo-taxonomia.js` |
+| Seed volumen | `DELETE` previo + INSERT masivo por chunks | `20250511140002-seed-experiment-productos-bulk.js` |
+
+Ejemplo de patrón usado:
+
+```javascript
+return db.sequelize.transaction(async (transaction) => {
+  const subcategoriaId = await resolveSubcategoriaId(cat, sub, transaction);
+  await queryCatalog(`INSERT INTO productos (...) VALUES (...)`, { bind, transaction });
+  return fetchProductFromView(id, transaction);
+});
+// Sequelize hace COMMIT; ante excepción, ROLLBACK.
 ```
 
-### Cómo reproducir los experimentos
+---
 
-Los archivos SQL están en `db/experiments/` y deben ejecutarse en orden:
+## Seeds
 
-```
-# 1. Verificar entorno (filas, índices existentes, tamaños)
-psql $DATABASE_URL -f db/experiments/00_setup.sql
+Orden de ejecución (`npm run db:seed`):
 
-# 2. Capturar planes SIN índices nuevos (baseline)
-psql $DATABASE_URL -f db/experiments/01_baseline.sql
+1. **`20250511140001-seed-catalogo-taxonomia.js`** — categorías y subcategorías (transacción ACID).
+2. **`20250511140002-seed-experiment-productos-bulk.js`** — productos sintéticos `[seed-exp]` para EXPLAIN (transacción ACID; `ANALYZE` post-commit).
 
-# 3. Crear los índices de experimentación
-psql $DATABASE_URL -f db/experiments/02_create_indexes.sql
+Cantidad configurable: `SEED_PRODUCT_COUNT` (default **15000**, tope **500000**). Valor `0` omite el bulk.
 
-# 4. Capturar planes CON índices — comparar con paso 2
-psql $DATABASE_URL -f db/experiments/03_with_indexes.sql
-
-# 5. Auditoría de redundancia y uso de índices (Persona E)
-psql $DATABASE_URL -f db/experiments/05_index_audit.sql
-
-# 6. Opcional: volver al estado baseline para repetir
-psql $DATABASE_URL -f db/experiments/04_drop_indexes.sql
+```powershell
+$env:SEED_PRODUCT_COUNT=50000; npm run db:seed
 ```
 
-Detalle de cada script: [`db/experiments/README.md`](db/experiments/README.md).  
-Informe de optimización y conclusiones de producción: [`informe/seccion_E.md`](informe/seccion_E.md).
+---
 
-> En Windows con Railway, agregar al `.env`: `DATABASE_SSL=true`  
-> Antes de correr los EXPLAIN, asegurarse de que el seeder de Persona B ya cargó datos de volumen.
+## Errores frecuentes
 
-Generar o actualizar `informe/seccion_C.md` (salidas literales + tabla antes/después):
+| Síntoma | Solución |
+|---------|----------|
+| `self-signed certificate` al migrar | `DATABASE_SSL=true` en `.env` |
+| `ECONNREFUSED` / timeout | Revisar `DATABASE_URL`, firewall, VPN |
+| `password authentication failed` | Copiar de nuevo la URL desde Railway |
+| Tablas vacías tras migrate | Ejecutar `npm run db:seed` |
+| API responde 503 | Falta `DATABASE_URL` en `.env` en la raíz del repo |
+| `relation "categorias" already exists` | `npx sequelize-cli db:migrate:status`; coordinar con el grupo antes de undo |
 
-```bash
-npm run informe:c
+---
+
+## Estructura del repositorio
+
+```
+├── server.js              # Servidor local + API REST
+├── lib/
+│   ├── catalog/           # CRUD con transacciones
+│   └── backup/            # Backup / restore PostgreSQL
+├── db/
+│   ├── schema.sql         # DDL canónico
+│   ├── migrations/
+│   ├── seeders/
+│   ├── models/
+│   └── experiments/       # Scripts EXPLAIN
+├── js/                    # Frontend (catálogo, admin, carrito)
+├── docs/BACKUP_RESTORE.md
+├── informe/               # Informes de rendimiento
+└── tests/                 # Tests unitarios / integración
 ```
 
-### Queries analizadas
+---
 
-| ID | Descripción | Esperado sin índice | Esperado con índice |
-|----|-------------|--------------------|--------------------|
-| Q1 | Catálogo activo filtrado por categoría, orden por fecha | Seq Scan + Sort | Index Scan / Bitmap Index Scan |
-| Q2 | Productos nuevos (últimos 14 días), activos | Seq Scan + Filter + Sort | Index Scan sin Sort extra |
-| Q3 | Panel admin: todos los productos con join | Seq Scan + Sort | Sort evitado en parte por `idx_created_at_desc` |
+## Scripts npm
 
+| Comando | Acción |
+|---------|--------|
+| `npm run dev` | Servidor local en `:5173` |
+| `npm run db:migrate` | Aplicar migraciones |
+| `npm run db:seed` | Cargar seeds |
+| `npm run db:setup` | Migrate + seed |
+| `npm run db:backup` | Crear backup |
+| `npm run informe:c` | Generar salidas EXPLAIN para informe C |
+| `npm test` | Ejecutar tests (backup + transacciones si hay `DATABASE_URL`) |
 
-**Notas:** en el DDL, `productos.images` es `text[]` (galería de URLs); el diagrama lo resume como `text` por compatibilidad con Mermaid. Los slugs en `categorias` y `subcategorias` equivalen a los filtros `cat` y `sub` del frontend; la vista `v_productos_catalogo` expone además `name` y `price` a partir de `nombre` y `precio`. Los índices extra para rendimiento se documentan en esta sección, en `db/experiments/` y en `informe/seccion_E.md`.
+---
+
+## Flujo Git (grupo)
+
+- Trabajar en **rama propia**; integrar en `main` vía **pull request**.
+- Mensajes de commit descriptivos: `feat(catalog): …`, `docs(readme): …`, `fix(db): …`.
+
+---
+
+## Demo en producción (frontend histórico)
+
+Sitio desplegado en Vercel (puede usar infraestructura anterior): [https://web-agustina.vercel.app/](https://web-agustina.vercel.app/)
+
+Para la entrega académica de Base de Datos, la referencia operativa es este repo con **PostgreSQL + API local + transacciones**.

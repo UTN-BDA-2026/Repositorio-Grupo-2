@@ -3,12 +3,15 @@
 /**
  * Catálogo base: categorías y subcategorías (slugs compatibles con el CHECK del DDL y con el admin).
  * Idempotente: ON CONFLICT no duplica filas.
+ * Transacción ACID: categorías + subcategorías se confirman o revierten juntas.
  */
 module.exports = {
   async up(queryInterface) {
     const { sequelize } = queryInterface;
 
-    await sequelize.query(`
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(
+        `
       INSERT INTO categorias (slug, nombre) VALUES
         ('indumentaria', 'Indumentaria'),
         ('maquillaje', 'Maquillaje'),
@@ -21,9 +24,12 @@ module.exports = {
         ('accesorios', 'Accesorios'),
         ('giftcards', 'Gift cards')
       ON CONFLICT (slug) DO UPDATE SET nombre = EXCLUDED.nombre;
-    `);
+    `,
+        { transaction }
+      );
 
-    await sequelize.query(`
+      await sequelize.query(
+        `
       INSERT INTO subcategorias (categoria_id, slug, nombre) VALUES
         ((SELECT id FROM categorias WHERE slug = 'indumentaria'), 'para-el-cabello', 'Para el cabello'),
         ((SELECT id FROM categorias WHERE slug = 'indumentaria'), 'bijou', 'Bijou'),
@@ -48,13 +54,19 @@ module.exports = {
         ((SELECT id FROM categorias WHERE slug = 'giftcards'), 'montos-fijos', 'Montos fijos'),
         ((SELECT id FROM categorias WHERE slug = 'giftcards'), 'personalizada', 'Personalizada')
       ON CONFLICT (categoria_id, slug) DO UPDATE SET nombre = EXCLUDED.nombre;
-    `);
+    `,
+        { transaction }
+      );
+    });
   },
 
   async down(queryInterface) {
     const { sequelize } = queryInterface;
-    await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`);
-    await sequelize.query(`
+
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`, { transaction });
+      await sequelize.query(
+        `
       DELETE FROM subcategorias
       WHERE slug IN (
         'para-el-cabello', 'bijou', 'llaveros', 'acero-quirurgico',
@@ -63,13 +75,19 @@ module.exports = {
         'libreria', 'agendas', 'portacosmeticos', 'organizadores',
         'carteras', 'mochilas', 'aros', 'collares', 'montos-fijos', 'personalizada'
       );
-    `);
-    await sequelize.query(`
+    `,
+        { transaction }
+      );
+      await sequelize.query(
+        `
       DELETE FROM categorias
       WHERE slug IN (
         'indumentaria', 'maquillaje', 'skincare', 'tazas', 'botellas-y-vasos',
         'regaleria', 'necesers', 'marroquineria', 'accesorios', 'giftcards'
       );
-    `);
+    `,
+        { transaction }
+      );
+    });
   },
 };

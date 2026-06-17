@@ -9,8 +9,14 @@ const { exec } = require('child_process');
 const PORT = Number(process.env.PORT || 5173);
 const ROOT = __dirname;
 
-const productosPath = path.join(ROOT, 'data', 'productos-demo.json');
 const metricasPath = path.join(ROOT, 'data', 'metricas.json');
+const hasDatabase =
+  process.env.DATABASE_URL != null && String(process.env.DATABASE_URL).trim() !== '';
+
+let catalog;
+if (hasDatabase) {
+  catalog = require('./lib/catalog');
+}
 
 function readJson(filePath, fallback) {
   try {
@@ -27,6 +33,44 @@ function sendJson(res, status, payload) {
     'Cache-Control': 'no-store',
   });
   res.end(JSON.stringify(payload));
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => {
+      data += chunk;
+      if (data.length > 2_000_000) {
+        reject(new Error('Payload demasiado grande'));
+        req.destroy();
+      }
+    });
+    req.on('end', () => {
+      if (!data.trim()) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        reject(new Error('JSON inválido'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function dbRequired(res) {
+  sendJson(res, 503, {
+    error: 'Base de datos no configurada. Copiá .env.example a .env y definí DATABASE_URL.',
+  });
+}
+
+function handleApiError(res, err) {
+  const status = err.status || 500;
+  sendJson(res, status, {
+    error: err.message || 'Error interno del servidor',
+  });
 }
 
 function contentType(filePath) {
@@ -70,7 +114,7 @@ function serveStatic(req, res, urlPath) {
 async function metricasPayload() {
   const base = readJson(metricasPath, { queries: [], environment: { counts: [] } });
 
-  if (!process.env.DATABASE_URL) return base;
+  if (!hasDatabase) return base;
 
   try {
     const { sequelize } = require('./db/models');
@@ -114,37 +158,92 @@ function openBrowser(url) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
 
-  if (url.pathname === '/api/productos' && req.method === 'GET') {
-    const products = readJson(productosPath, []);
-    sendJson(res, 200, products);
-    return;
-  }
-
-  if (url.pathname === '/api/producto' && req.method === 'GET') {
-    const id = url.searchParams.get('id');
-    const products = readJson(productosPath, []);
-    const product = products.find((p) => String(p.id) === String(id));
-    if (!product) {
-      sendJson(res, 404, { error: 'Producto no encontrado' });
+  try {
+    if (url.pathname === '/api/productos' && req.method === 'GET') {
+      if (!hasDatabase) return dbRequired(res);
+      const products = await catalog.listProducts({ activeOnly: true });
+      sendJson(res, 200, products);
       return;
     }
-    sendJson(res, 200, product);
-    return;
-  }
 
-  if (url.pathname === '/api/metricas' && req.method === 'GET') {
-    const payload = await metricasPayload();
-    sendJson(res, 200, payload);
-    return;
-  }
+    if (url.pathname === '/api/admin/productos' && req.method === 'GET') {
+      if (!hasDatabase) return dbRequired(res);
+      const products = await catalog.listProducts({ activeOnly: false });
+      sendJson(res, 200, products);
+      return;
+    }
 
-  serveStatic(req, res, url.pathname);
+    if (url.pathname === '/api/producto' && req.method === 'GET') {
+      if (!hasDatabase) return dbRequired(res);
+      const id = url.searchParams.get('id');
+      if (!id) {
+        sendJson(res, 400, { error: 'Parámetro id requerido' });
+        return;
+      }
+      const product = await catalog.getProductById(id);
+      if (!product) {
+        sendJson(res, 404, { error: 'Producto no encontrado' });
+        return;
+      }
+      sendJson(res, 200, product);
+      return;
+    }
+
+    if (url.pathname === '/api/guardar-producto' && req.method === 'POST') {
+      if (!hasDatabase) return dbRequired(res);
+      const body = await readBody(req);
+      const product = await catalog.createProduct(body || {});
+      sendJson(res, 201, product);
+      return;
+    }
+
+    if (url.pathname === '/api/producto' && req.method === 'PATCH') {
+      if (!hasDatabase) return dbRequired(res);
+      const body = await readBody(req);
+      if (!body || body.id == null) {
+        sendJson(res, 400, { error: 'Campo id requerido' });
+        return;
+      }
+      const { id, ...fields } = body;
+      const product = await catalog.updateProduct(id, fields);
+      sendJson(res, 200, product);
+      return;
+    }
+
+    if (url.pathname === '/api/producto' && req.method === 'DELETE') {
+      if (!hasDatabase) return dbRequired(res);
+      const body = await readBody(req);
+      if (!body || body.id == null) {
+        sendJson(res, 400, { error: 'Campo id requerido' });
+        return;
+      }
+      const result = await catalog.deleteProduct(body.id);
+      sendJson(res, 200, result);
+      return;
+    }
+
+    if (url.pathname === '/api/metricas' && req.method === 'GET') {
+      const payload = await metricasPayload();
+      sendJson(res, 200, payload);
+      return;
+    }
+
+    serveStatic(req, res, url.pathname);
+  } catch (err) {
+    handleApiError(res, err);
+  }
 });
 
 server.listen(PORT, '127.0.0.1', () => {
   const url = `http://127.0.0.1:${PORT}/index.html`;
-  console.log(`\n  AGUSTINA — servidor local`);
+  console.log('\n  AGUSTINA — servidor local');
   console.log(`  → ${url}`);
-  console.log(`  → Métricas: http://127.0.0.1:${PORT}/metricas.html\n`);
+  console.log(`  → Admin: http://127.0.0.1:${PORT}/admin.html`);
+  console.log(`  → Métricas: http://127.0.0.1:${PORT}/metricas.html`);
+  if (hasDatabase) {
+    console.log('  → API catálogo: PostgreSQL (DATABASE_URL configurada)\n');
+  } else {
+    console.log('  ⚠ DATABASE_URL no configurada — la API devolverá 503\n');
+  }
   if (process.env.OPEN_BROWSER !== 'false') openBrowser(url);
 });

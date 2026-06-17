@@ -8,7 +8,8 @@ const { QueryTypes } = require('sequelize');
  * Cantidad: variable de entorno SEED_PRODUCT_COUNT (default 15000). Ej.: 50000
  * Requiere haber corrido antes el seeder de taxonomía (subcategorias no vacía).
  *
- * Inserción en chunks para no saturar memoria en Railway.
+ * Transacción ACID: el DELETE previo y todos los INSERT del bulk confirman o revierten juntos.
+ * ANALYZE corre fuera de la transacción (post-commit).
  */
 const DEFAULT_COUNT = 15000;
 const CHUNK_SIZE = 5000;
@@ -41,20 +42,21 @@ module.exports = {
       );
     }
 
-    await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`);
-
     // eslint-disable-next-line no-console
     console.log(
       `[seed-experiment-productos-bulk] Insertando ${total} filas en bloques de ${CHUNK_SIZE}…`
     );
 
-    for (let start = 1; start <= total; start += CHUNK_SIZE) {
-      const end = Math.min(start + CHUNK_SIZE - 1, total);
-      const subCount = Number(cnt);
-      const a = Number(start);
-      const b = Number(end);
-      await sequelize.query(
-        `
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`, { transaction });
+
+      for (let start = 1; start <= total; start += CHUNK_SIZE) {
+        const end = Math.min(start + CHUNK_SIZE - 1, total);
+        const subCount = Number(cnt);
+        const a = Number(start);
+        const b = Number(end);
+        await sequelize.query(
+          `
         INSERT INTO productos (
           nombre, precio, precio_efectivo, subcategoria_id,
           image_url, images, descripcion, activo, created_at, updated_at
@@ -83,9 +85,10 @@ module.exports = {
           LIMIT 1
         ) pick;
         `,
-        { bind: [a, b, subCount] }
-      );
-    }
+          { bind: [a, b, subCount], transaction }
+        );
+      }
+    });
 
     await sequelize.query(`ANALYZE productos;`);
     // eslint-disable-next-line no-console
@@ -94,7 +97,11 @@ module.exports = {
 
   async down(queryInterface) {
     const { sequelize } = queryInterface;
-    await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`);
+
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`DELETE FROM productos WHERE nombre LIKE '[seed-exp] %';`, { transaction });
+    });
+
     await sequelize.query(`ANALYZE productos;`);
   },
 };
