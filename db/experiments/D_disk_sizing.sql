@@ -79,13 +79,13 @@ ORDER BY pg_relation_size(indexname::regclass) DESC;
 
 SELECT
     schemaname,
-    tablename,
+    relname AS tablename,
     indexrelname,
     idx_scan,
     idx_tup_read,
     idx_tup_fetch
 FROM pg_stat_user_indexes
-WHERE tablename = 'productos'
+WHERE relname = 'productos'
 ORDER BY idx_scan DESC, indexrelname;
 
 -- ─────────────────────────────────────────────────────────────────────────────

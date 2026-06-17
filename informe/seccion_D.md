@@ -1,14 +1,16 @@
 # Sección D — Planes de ejecución y dimensionamiento en disco
 
 **Responsable:** Persona D (Perez, Juan Ignacio)  
-**Datos de planes:** Persona C — outputs de `EXPLAIN (ANALYZE, BUFFERS)`  
-**Dimensionamiento:** `db/experiments/D_disk_sizing.sql`
+**Datos de planes:** Persona C — `informe/seccion_C.md` (generado con `npm run informe:c`)  
+**Dimensionamiento:** `db/experiments/D_disk_sizing.sql` · mediciones post-índices (15 000 productos)
 
 ---
 
 ## Introducción
 
-Un plan de ejecución en PostgreSQL es la descripción, en forma de árbol de operadores, de cómo el motor accederá a las tablas e índices para resolver una consulta SQL. El optimizador basado en costes genera varios candidatos y elige el que minimiza su función de coste estimada, usando estadísticas del catálogo (`pg_statistic`). Comando `EXPLAIN` muestra ese plan sin ejecutarlo; `EXPLAIN ANALYZE` lo ejecuta realmente y añade tiempos y cardinalidades observadas, lo que permite contrastar estimación y realidad. En un catálogo de e-commerce con decenas de miles de productos, la diferencia entre un Seq Scan con ordenamiento en memoria y un Index Scan alineado al filtro `activo` y al `ORDER BY` se traduce en latencia perceptible para el usuario y en mayor consumo de I/O en instancias cloud como Railway.
+Un plan de ejecución en PostgreSQL describe, en forma de árbol de operadores, cómo el motor accederá a tablas e índices para resolver una consulta. `EXPLAIN ANALYZE` ejecuta la query y contrasta tiempos estimados vs reales. En un catálogo con decenas de miles de productos, la diferencia entre un Seq Scan con Sort y un Index Scan alineado al filtro `activo` y al `ORDER BY` impacta latencia e I/O en instancias cloud (Railway).
+
+**Entorno de medición:** 10 categorías, 22 subcategorías, 15 000 productos (`[seed-exp]`).
 
 ---
 
@@ -16,141 +18,183 @@ Un plan de ejecución en PostgreSQL es la descripción, en forma de árbol de op
 
 ### Query 1: Catálogo público — productos activos de una categoría
 
-Listado del frontend al filtrar por categoría: join `productos` → `subcategorias` → `categorias`, filtro `activo = TRUE` y `c.slug = 'indumentaria'`, orden por novedad.
+Listado al filtrar por categoría: join `productos` → `subcategorias` → `categorias`, filtro `activo = TRUE` y `c.slug = 'indumentaria'`, orden por novedad.
 
 **SQL:**
 
 ```sql
-[QUERY_1]
+SELECT
+    p.id, p.nombre AS name, p.precio AS price, p.precio_efectivo,
+    c.slug AS cat, s.slug AS sub, p.image_url, p.images,
+    p.descripcion, p.created_at
+FROM productos p
+JOIN subcategorias s ON s.id = p.subcategoria_id
+JOIN categorias c ON c.id = s.categoria_id
+WHERE p.activo = TRUE AND c.slug = 'indumentaria'
+ORDER BY p.created_at DESC;
 ```
 
-| Métrica | Sin índice | Con índice |
-|---------|-----------|------------|
-| Tipo de nodo principal | | |
-| Costo estimado (startup) | | |
-| Costo estimado (total) | | |
-| Tiempo real (ms) | | |
-| Filas estimadas | | |
-| Filas reales | | |
-| Buffers shared hit | | |
-| Buffers shared read | | |
+| Métrica | Sin índice exp. | Con índice exp. |
+|---------|-----------------|-----------------|
+| Tipo de nodo principal | Sort | Sort |
+| Costo estimado (total) | ~50.67 | ~50.67 |
+| Tiempo real (ms) | 3.642 | 3.293 |
+| Filas reales | 2568 | 2568 |
+| Buffers shared hit | 2266 | 2263 |
+| Buffers shared read | 0 | 0 |
 
 **Análisis nodo a nodo sin índice:**
 
-```
-[PLAN_SIN_INDICE_1]
+```text
+Sort  (actual time=3.255..3.497 rows=2568 loops=1)
+  Sort Key: p.created_at DESC
+  Sort Method: quicksort  Memory: 859kB
+  ->  Nested Loop  (actual time=0.034..2.127 rows=2568 loops=1)
+        ->  Nested Loop  (rows=4) — categorias + subcategorias por slug
+        ->  Index Scan using idx_productos_subcategoria_id on productos p
+              Filter: activo  — Rows Removed by Filter: 40
 ```
 
-> [EXPLICACION_SIN_INDICE_1]
+> El planner resuelve la taxonomía con índices en `categorias.slug` y `subcategorias`. En `productos` usa el índice de FK (`idx_productos_subcategoria_id`), aplica `Filter: activo` en heap y ordena 2568 filas en memoria (`Sort` ~859 kB). No hay Seq Scan masivo gracias al índice de FK heredado del esquema.
 
 **Análisis nodo a nodo con índice:**
 
-```
-[PLAN_CON_INDICE_1]
+```text
+Sort  (actual time=2.929..3.187 rows=2568 loops=1)
+  Sort Key: p.created_at DESC
+  ->  Index Scan using idx_productos_subcategoria_id on productos p
+        Filter: activo
 ```
 
-> [EXPLICACION_CON_INDICE_1]
+> Con los índices de experimentación creados, el plan **no cambia** a `idx_productos_activos`: el optimizador sigue prefiriendo el índice de FK + Sort. Mejora marginal (~10 % en tiempo). Para forzar uso del parcial haría falta más volumen, `ANALYZE` tras carga masiva o revisar selectividad. **Conclusión:** el índice parcial queda justificado por diseño (catálogo activo) pero la evidencia Q1 con 15k filas es débil; conviene repetir con 50k+.
 
 ---
 
 ### Query 2: Badge NUEVO — productos activos de los últimos 14 días
 
-Consulta de la home y las cards: solo tabla `productos`, filtro por `activo` y ventana temporal en `created_at`, orden descendente por fecha.
+Consulta de home/cards: solo `productos`, filtro `activo` y ventana de 14 días en `created_at`.
 
 **SQL:**
 
 ```sql
-[QUERY_2]
+SELECT p.id, p.nombre, p.precio, p.image_url, p.created_at
+FROM productos p
+WHERE p.activo = TRUE
+  AND p.created_at >= now() - INTERVAL '14 days'
+ORDER BY p.created_at DESC;
 ```
 
-| Métrica | Sin índice | Con índice |
-|---------|-----------|------------|
-| Tipo de nodo principal | | |
-| Costo estimado (startup) | | |
-| Costo estimado (total) | | |
-| Tiempo real (ms) | | |
-| Filas estimadas | | |
-| Filas reales | | |
-| Buffers shared hit | | |
-| Buffers shared read | | |
+| Métrica | Sin índice exp. | Con índice exp. |
+|---------|-----------------|-----------------|
+| Tipo de nodo principal | Sort → Seq Scan | Index Scan (`idx_productos_created_at_desc`) |
+| Tiempo real (ms) | 2.518 | 0.023 |
+| Filas reales | 0 | 0 |
+| Buffers shared hit | 563 | 2 |
+| Buffers shared read | 0 | 0 |
 
-**Análisis nodo a nodo sin índice:**
+**Análisis sin índice:**
 
-```
-[PLAN_SIN_INDICE_2]
-```
-
-> [EXPLICACION_SIN_INDICE_2]
-
-**Análisis nodo a nodo con índice:**
-
-```
-[PLAN_CON_INDICE_2]
+```text
+Sort  (actual time=2.502..2.503 rows=0 loops=1)
+  ->  Seq Scan on productos p
+        Filter: (activo AND created_at >= now() - '14 days')
+        Rows Removed by Filter: 15000
 ```
 
-> [EXPLICACION_CON_INDICE_2]
+> Seq Scan completo de 15 000 filas aunque el resultado sea vacío (ningún producto seed en ventana de 14 días). Costo fijo alto para una query frecuente en la home.
+
+**Análisis con índice:**
+
+```text
+Index Scan using idx_productos_created_at_desc on productos p
+  Index Cond: (created_at >= now() - '14 days')
+  Filter: activo
+  Buffers: shared hit=2
+  Execution Time: 0.023 ms
+```
+
+> El índice en `created_at DESC` acota el rango temporal sin recorrer la tabla. **Mejora ~100×** en tiempo de ejecución. Este es el caso más claro de retorno de la inversión en disco.
 
 ---
 
 ### Query 3: Panel admin — listado completo con taxonomía
 
-Listado administrativo sin filtrar por `activo`: join a categorías y subcategorías, orden global por `created_at DESC`.
+Listado sin filtrar `activo`: join a categorías/subcategorías, orden global por `created_at DESC`.
 
 **SQL:**
 
 ```sql
-[QUERY_3]
+SELECT p.id, p.nombre, p.precio, p.activo, c.slug AS cat, s.slug AS sub, p.created_at
+FROM productos p
+JOIN subcategorias s ON s.id = p.subcategoria_id
+JOIN categorias c ON c.id = s.categoria_id
+ORDER BY p.created_at DESC;
 ```
 
-| Métrica | Sin índice | Con índice |
-|---------|-----------|------------|
-| Tipo de nodo principal | | |
-| Costo estimado (startup) | | |
-| Costo estimado (total) | | |
-| Tiempo real (ms) | | |
-| Filas estimadas | | |
-| Filas reales | | |
-| Buffers shared hit | | |
-| Buffers shared read | | |
+| Métrica | Sin índice exp. | Con índice exp. |
+|---------|-----------------|-----------------|
+| Tipo de nodo principal | Sort → Hash Join | Nested Loop + Index Scan (`created_at`) |
+| Tiempo real (ms) | 14.947 | 14.679 |
+| Filas reales | 15000 | 15000 |
+| Buffers shared hit | 565 | 15066 |
+| Buffers shared read | 0 | 40 |
 
-**Análisis nodo a nodo sin índice:**
+**Análisis sin índice:**
 
-```
-[PLAN_SIN_INDICE_3]
+```text
+Sort  (Memory: 1700kB, actual time=12.087..14.272 rows=15000)
+  ->  Hash Join  (productos Seq Scan 15000 rows + subcategorias + categorias)
 ```
 
-> [EXPLICACION_SIN_INDICE_3]
+> Plan clásico: seq scan de toda la tabla, hash join con tablas dimensión pequeñas, sort en memoria de 15k filas.
 
-**Análisis nodo a nodo con índice:**
+**Análisis con índice:**
 
+```text
+Nested Loop
+  ->  Index Scan using idx_productos_created_at_desc on productos p (15000 rows)
+  ->  Memoize + Index Scan subcategorias_pkey / categorias_pkey
 ```
-[PLAN_CON_INDICE_3]
-```
 
-> [EXPLICACION_CON_INDICE_3]
+> El índice evita el `Sort` explícito (orden ya viene del index scan), pero el nested loop con 15k iteraciones incrementa buffers hit. Mejora de tiempo modesta (~2 %); el beneficio principal es eliminar el sort de 1700 kB en RAM.
 
 ---
 
 ## Dimensionamiento en disco
 
-Mediciones obtenidas con `db/experiments/D_disk_sizing.sql`. Registrar dos corridas si el informe lo requiere: tras `01_baseline.sql` y tras `02_create_indexes.sql`.
+Mediciones con índices de experimentación aplicados (`db:migrate` + `20250520130000-add-catalog-indexes.js`), 15 000 productos:
 
 | Objeto | Tamaño heap | Tamaño índices | Total |
 |--------|-------------|----------------|-------|
-| productos | [PRODUCTOS_HEAP] | [PRODUCTOS_INDICES] | [PRODUCTOS_TOTAL] |
-| categorias | [CATEGORIAS_HEAP] | [CATEGORIAS_INDICES] | [CATEGORIAS_TOTAL] |
-| subcategorias | [SUBCATEGORIAS_HEAP] | [SUBCATEGORIAS_INDICES] | [SUBCATEGORIAS_TOTAL] |
+| productos | 4504 kB | 1336 kB | 5880 kB |
+| categorias | 8192 bytes | 32 kB | 40 kB |
+| subcategorias | 8192 bytes | 32 kB | 40 kB |
 
-En la tabla `productos`, el heap ocupa [PRODUCTOS_HEAP] frente a [PRODUCTOS_INDICES] en índices (total [PRODUCTOS_TOTAL]). La proporción índices/total es de aproximadamente [RATIO_INDICES_PRODUCTOS] %. Las tablas de taxonomía (`categorias`, `subcategorias`) permanecen en órdenes de magnitud menores ([CATEGORIAS_TOTAL] y [SUBCATEGORIAS_TOTAL] respectivamente), por lo que el espacio adicional relevante para la decisión de diseño se concentra en `productos`. Tras crear `idx_productos_activos` e `idx_productos_created_at_desc`, conviene contrastar el desglose por índice del script `D_disk_sizing.sql` con el incremento respecto a la corrida baseline: si el índice parcial es notablemente más chico que un índice completo sobre las mismas columnas, el costo en disco está acotado. La pregunta de negocio es si ese overhead se compensa con la reducción de `Execution Time` y de `shared read` documentada en las tablas de las queries 1 y 2; completar esa comparación con los números reales antes de cerrar el informe.
+**Desglose de índices en `productos`:**
+
+| Índice | Tamaño |
+|--------|--------|
+| `idx_productos_activos` | 456 kB |
+| `idx_productos_created_at_desc` | 344 kB |
+| `productos_pkey` | 344 kB |
+| `idx_productos_subcategoria_id` | 192 kB |
+
+En `productos`, el heap ocupa **4504 kB** frente a **1336 kB** en índices (total **5880 kB**). La proporción índices/total es de aproximadamente **23 %**. Las tablas de taxonomía (`categorias`, `subcategorias`) suman **40 kB** cada una — el espacio relevante para la decisión de diseño se concentra en `productos`.
+
+Los dos índices nuevos (`idx_productos_activos` + `idx_productos_created_at_desc`) ocupan **~800 kB** combinados. Q2 demostró ahorro de I/O y tiempo que justifica ese overhead; Q1 requiere más volumen para validar el parcial.
 
 ---
 
 ## Relación costo-beneficio de los índices
 
-El índice `idx_productos_subcategoria_id`, creado con el esquema inicial sobre la clave foránea, cumple un rol estructural distinto del de rendimiento de catálogo: garantiza que los joins y las operaciones de integridad referencial no degeneren en seq scans sobre el lado hijo cuando el optimizador resuelve `Nested Loop` desde `subcategorias` hacia `productos`. Su mantenimiento es razonable incluso si el espacio en disco es modesto frente al heap, porque sustenta la query 1 en la rama del join y cualquier listado filtrado por subcategoría. En el plan de ejecución debería observarse un acceso indexado o nested loop eficiente en el lado de `productos` cuando la cardinalidad del lado externo es baja; si en los planes pegados el cuello de botella sigue siendo un seq scan masivo sobre `productos`, el problema no es la FK sino la falta de un índice compuesto alineado al predicado `activo` y al ordenamiento.
+| Índice | Rol | Evidencia Q1–Q3 | Decisión |
+|--------|-----|-----------------|----------|
+| `idx_productos_subcategoria_id` | FK, joins | Usado en Q1 (4 loops) | **Mantener** — estructural |
+| `idx_productos_activos` | Catálogo activo + orden | `idx_scan` bajo con 15k; plan no lo elige aún | **Mantener** — diseño correcto; monitorear con más datos |
+| `idx_productos_created_at_desc` | Q2 badge, Q3 admin | Q2: 2.5 ms → 0.02 ms; `idx_scan` > 0 | **Mantener** — beneficio medido |
 
-El índice parcial `idx_productos_activos` sobre `(subcategoria_id, created_at DESC) WHERE activo = TRUE` está orientado explícitamente a la query 1 y a cualquier listado público que filtre productos activos. Al excluir filas con `activo = FALSE`, el árbol B-tree solo indexa el subconjunto que el frontend muestra, lo que reduce tamaño en disco respecto a un índice completo y aumenta la selectividad útil. En un plan favorable de la query 1 con índices aplicados, se espera dejar de recorrer todo el heap de `productos` y reducir o eliminar un `Sort` costoso sobre `created_at`, evidenciado por `Index Scan` (o `Bitmap` seguido de heap scan acotado) sobre ese nombre de índice y por una caída de `shared read` en el nodo principal. Si tras la migración el plan no lo usa, conviene revisar estadísticas (`ANALYZE`) y la selectividad real del filtro por categoría antes de descartar el índice.
+La tríada de cierre: (a) mejora en plan/tiempo — **Q2 sí, Q1 marginal, Q3 leve**; (b) tamaño en disco — **23 % del total, aceptable**; (c) uso en `pg_stat_user_indexes` — ver sección E.
 
-`idx_productos_created_at_desc` sobre `created_at DESC` ataca la query 2 (badge NUEVO) y cualquier ordenamiento global por fecha, incluida en parte la query 3 del panel admin. Su beneficio se manifiesta cuando el rango temporal de catorce días, combinado con `activo = TRUE`, deja de implicar leer y ordenar un porcentaje alto de la tabla. En el `EXPLAIN` de la query 2, un escenario positivo muestra acceso por índice en `created_at` con menor `Execution Time` que el baseline y, idealmente, ausencia de `Sort` sobre un volumen grande de filas. El costo en disco es una estructura adicional que crece con el número de filas indexadas (todas, no solo activas); por eso su justificación depende de la frecuencia de esa consulta en producción frente al costo de mantenimiento en escrituras (`INSERT`/`UPDATE` que tocan `created_at` o `activo`).
+---
 
-La query 3, al no filtrar por `activo`, no puede aprovechar el índice parcial y puede seguir requiriendo un `Sort` o un scan amplio aun con `idx_productos_created_at_desc`; mantener ambos índices nuevos solo por el admin sería discutible si el único beneficio medible está en Q1 y Q2. Un índice redundante o poco usado se detecta en `pg_stat_user_indexes` con `idx_scan` bajo tras ejecutar la batería de pruebas: el script `D_disk_sizing.sql` incluye esa consulta para `productos`. En conjunto, la decisión de conservar `idx_productos_activos` e `idx_productos_created_at_desc` debe apoyarse en la tríada evidencia del plan (menor tiempo real y menos buffers leídos), evidencia de uso (`idx_scan` > 0 en las queries representativas) y evidencia de espacio (incremento de `pg_indexes_size` acotado frente al ahorro de I/O). Si los planes con índice no mejoran sensiblemente respecto al baseline con el volumen acordado del seed, el informe debe plantear ajuste de definición o de estadísticas antes de asumir que el overhead en Railway está justificado.
+*Generado a partir de `informe/seccion_C.md` y `scripts/run-informe-de.js` · junio 2026.*

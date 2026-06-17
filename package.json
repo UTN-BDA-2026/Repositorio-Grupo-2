@@ -20,6 +20,7 @@
     "db:backup:validate": "node scripts/db-backup-cli.js validate",
     "db:backup:prune": "node scripts/db-backup-cli.js prune",
     "informe:c": "node scripts/run-explain-c.js",
+    "informe:de": "node scripts/run-informe-de.js",
     "test": "node --test tests/**/*.test.js"
   },
   "engines": {

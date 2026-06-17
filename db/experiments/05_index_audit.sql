@@ -27,7 +27,7 @@ SELECT
     pg_size_pretty(pg_relation_size(indexrelid)) AS tamanio
 FROM pg_stat_user_indexes
 WHERE schemaname = 'public'
-  AND tablename = 'productos'
+  AND relname = 'productos'
 ORDER BY idx_scan DESC, indexrelname;
 
 \echo '=== 3. Índices nunca usados desde último reset (candidatos a revisar) ==='
@@ -37,7 +37,7 @@ SELECT
     pg_size_pretty(pg_relation_size(indexrelid)) AS tamanio
 FROM pg_stat_user_indexes
 WHERE schemaname = 'public'
-  AND tablename = 'productos'
+  AND relname = 'productos'
   AND idx_scan = 0
   AND indexrelname NOT LIKE '%_pkey'
 ORDER BY pg_relation_size(indexrelid) DESC;

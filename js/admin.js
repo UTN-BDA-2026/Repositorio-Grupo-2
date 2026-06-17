@@ -1,9 +1,68 @@
-const ADMIN_PWD = "1234";
+const ADMIN_TOKEN_KEY = "agustina_admin_token";
+
+function authHeaders(extra = {}) {
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+  const headers = { ...extra };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+async function adminFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: authHeaders(options.headers || {}),
+  });
+  if (res.status === 401) {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    document.getElementById("login-screen").style.display = "block";
+    document.getElementById("admin-panel").style.display = "none";
+    throw new Error("Sesión expirada. Volvé a iniciar sesión.");
+  }
+  return res;
+}
 
 // ---- LOGIN ----
 document.getElementById("pwd-input").addEventListener("keydown", e => {
   if (e.key === "Enter") doLogin();
 });
+
+async function restoreSession() {
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+  if (!token) return;
+  try {
+    const res = await fetch(`${API_URL}/admin/session`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("invalid");
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-panel").style.display = "block";
+  } catch {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", restoreSession);
+
+async function doLogin() {
+  const val = document.getElementById("pwd-input").value;
+  const errEl = document.getElementById("login-err");
+  try {
+    const res = await fetch(`${API_URL}/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: val }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Contraseña incorrecta");
+    sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-panel").style.display = "block";
+    errEl.style.display = "none";
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  }
+}
 
 // ---- INPUT IMÁGENES (múltiples) ----
 let selectedFiles = [];
@@ -29,17 +88,6 @@ document.getElementById("f-img-file").addEventListener("change", function() {
   });
   document.getElementById("upload-zone").textContent = `✓ ${selectedFiles.length} foto${selectedFiles.length > 1 ? "s" : ""} seleccionada${selectedFiles.length > 1 ? "s" : ""}`;
 });
-
-function doLogin() {
-  const val = document.getElementById("pwd-input").value;
-  if (val === ADMIN_PWD) {
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("admin-panel").style.display = "block";
-  } else {
-    document.getElementById("login-err").style.display = "block";
-  }
-}
-
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -125,7 +173,7 @@ async function saveProduct() {
     const imageUrl = imageUrls[0];
     const images = imageUrls;
 
-    const res = await fetch(`${API_URL}/guardar-producto`, {
+    const res = await adminFetch(`${API_URL}/guardar-producto`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, price, image_url: imageUrl, images, cat, sub, precio_efectivo, descripcion })
@@ -151,7 +199,7 @@ async function loadProducts() {
   const list = document.getElementById("product-list");
   list.innerHTML = `<div class="loading">Cargando...</div>`;
 
-  const res = await fetch(`${API_URL}/admin/productos`);
+  const res = await adminFetch(`${API_URL}/admin/productos`);
   allProducts = await res.json();
 
   // Resetear filtros
@@ -314,12 +362,12 @@ async function deleteImage(id, encodedUrl) {
   if (status) status.textContent = "Eliminando...";
 
   try {
-    const res = await fetch(`${API_URL}/producto?id=${id}`);
+    const res = await adminFetch(`${API_URL}/producto?id=${id}`);
     const prod = await res.json();
     let imgs = (prod.images && prod.images.length) ? [...prod.images] : (prod.image_url ? [prod.image_url] : []);
     imgs = imgs.filter(u => u !== url);
 
-    const patch = await fetch(`${API_URL}/producto`, {
+    const patch = await adminFetch(`${API_URL}/producto`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, images: imgs, image_url: imgs[0] || "" })
@@ -376,7 +424,7 @@ async function saveEdit(id) {
   if (status) status.textContent = "";
 
   try {
-    const patch = await fetch(`${API_URL}/producto`, {
+    const patch = await adminFetch(`${API_URL}/producto`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, name, price, cat, sub, precio_efectivo, descripcion })
@@ -408,7 +456,7 @@ async function saveEdit(id) {
 
 // ---- TOGGLE ACTIVO ----
 async function toggleActivo(id, currentActivo) {
-  await fetch(`${API_URL}/producto`, {
+  await adminFetch(`${API_URL}/producto`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id, activo: !currentActivo })
@@ -438,7 +486,7 @@ async function toggleActivo(id, currentActivo) {
 async function deleteProduct(id, name) {
   if (!confirm(`¿Segura que querés eliminar "${name}"?`)) return;
 
-  await fetch(`${API_URL}/producto`, {
+  await adminFetch(`${API_URL}/producto`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id })
@@ -528,7 +576,7 @@ async function saveNewImages(id) {
 
   try {
     // Obtener imágenes actuales del producto
-    const res = await fetch(`${API_URL}/producto?id=${id}`);
+    const res = await adminFetch(`${API_URL}/producto?id=${id}`);
     const prod = await res.json();
     const existing = (prod.images && prod.images.length) ? prod.images : (prod.image_url ? [prod.image_url] : []);
 
@@ -537,7 +585,7 @@ async function saveNewImages(id) {
     const allImages = [...existing, ...newUrls];
 
     // Actualizar producto
-    const patch = await fetch(`${API_URL}/producto`, {
+    const patch = await adminFetch(`${API_URL}/producto`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, images: allImages, image_url: allImages[0] })

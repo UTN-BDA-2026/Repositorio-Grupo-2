@@ -108,7 +108,7 @@ Abre automáticamente:
 | URL | Contenido |
 |-----|-----------|
 | http://127.0.0.1:5173/ | Catálogo público |
-| http://127.0.0.1:5173/admin.html | Panel admin (contraseña demo: `1234`) |
+| http://127.0.0.1:5173/admin.html | Panel admin (login vía `/api/admin/login`; ver `ADMIN_PASSWORD` en `.env`) |
 | http://127.0.0.1:5173/metricas.html | Métricas e informes de rendimiento |
 
 Si `DATABASE_URL` no está configurada, la API responde **503** con un mensaje claro.
@@ -218,9 +218,8 @@ Referencia rápida para la corrección: **qué** se implementó y **dónde** est
 
 ### 4. Seguridad
 
-- **Dónde:** [`config/database.js`](config/database.js), [`.env.example`](.env.example), constraints del DDL.
-- **Qué:** Credenciales fuera del código (`.env`, ignorado por git); conexión TLS a Railway (`DATABASE_SSL`); integridad referencial (`RESTRICT`); validación de slugs en CHECK.  
-  **Nota:** la contraseña del admin en el frontend (`admin.html`) es solo demo local; en producción la autenticación debería moverse al servidor.
+- **Dónde:** [`config/database.js`](config/database.js), [`.env.example`](.env.example), [`lib/auth/admin-auth.js`](lib/auth/admin-auth.js), [`lib/catalog/product-service.js`](lib/catalog/product-service.js), constraints del DDL.
+- **Qué:** Credenciales fuera del código (`.env`, ignorado por git); conexión TLS a Railway (`DATABASE_SSL`); consultas parametrizadas con `$1` / `{ bind }` en API y seeders; integridad referencial (`RESTRICT`); autenticación admin **server-side** (`POST /api/admin/login`, token Bearer en rutas de escritura).
 
 ### 5. Transacciones ACID
 
@@ -245,6 +244,11 @@ return db.sequelize.transaction(async (transaction) => {
 });
 // Sequelize hace COMMIT; ante excepción, ROLLBACK.
 ```
+
+### 6. Decisión NoSQL
+
+- **Dónde:** [`docs/DECISION_NOSQL.md`](docs/DECISION_NOSQL.md).
+- **Qué:** PostgreSQL exclusivo para el catálogo; imágenes en Cloudinary (URLs en la DB); carrito en `localStorage`. Justificación documentada de por qué no se adoptó MongoDB/Redis.
 
 ---
 

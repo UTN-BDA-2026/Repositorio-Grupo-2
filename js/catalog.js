@@ -396,7 +396,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     grid.innerHTML = list.map(p => {
-      // Todas las imágenes del producto (usa array 'images' de Supabase)
+      // Todas las imágenes del producto (array `images` desde la API)
       const allImgs = (p.images && p.images.length) ? p.images : [p.image_url].filter(Boolean);
 
       const isNew = p.created_at
@@ -459,7 +459,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ── Image cycling en hover ──────────────────────────────────────────────
   // La imagen secundaria usa data-src para no descargarse en el render inicial.
-  // Se carga desde Supabase únicamente cuando el usuario hace hover sobre la card.
+  // Imagen secundaria: se carga al hacer hover sobre la card.
   function attachImageCycle() {
     document.querySelectorAll(".product-link").forEach(card => {
       const allImgs   = JSON.parse(decodeURIComponent(card.dataset.images || "[]"));

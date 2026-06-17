@@ -24,10 +24,12 @@ Completar tras ejecutar `05_index_audit.sql`:
 
 | Índice | Tamaño en disco | `idx_scan` (tras batería 01+03) |
 |--------|-----------------|----------------------------------|
-| `productos_pkey` | [PEGAR] | [PEGAR] |
-| `idx_productos_subcategoria_id` | [PEGAR] | [PEGAR] |
-| `idx_productos_activos` | [PEGAR] | [PEGAR] |
-| `idx_productos_created_at_desc` | [PEGAR] | [PEGAR] |
+| `productos_pkey` | 344 kB | 0 |
+| `idx_productos_subcategoria_id` | 192 kB | 49 |
+| `idx_productos_activos` | 456 kB | 0 |
+| `idx_productos_created_at_desc` | 344 kB | 7 |
+
+> Mediciones con 15 000 productos en Railway (junio 2026). `idx_productos_activos` con `idx_scan = 0` confirma que el planner prefirió el índice de FK en Q1; ejecutar de nuevo tras `ANALYZE` o con 50k filas antes de evaluar `DROP`.
 
 ---
 
@@ -84,13 +86,13 @@ CREATE INDEX idx_productos_nuevos_activos
 
 ## 3. Decisión por query (resumen para el informe)
 
-Completar tiempos y buffers con las salidas de Persona C.
+Completar tiempos y buffers con las salidas de Persona C (`informe/seccion_C.md`).
 
-| Query | Índice esperado en plan favorable | ¿DROP algún índice actual? |
-|-------|-----------------------------------|----------------------------|
-| Q1 — catálogo por categoría, activos | `idx_productos_activos` (+ nested loop en taxonomía) | No |
-| Q2 — badge 14 días, activos | `idx_productos_created_at_desc` o parcial alternativo | No (salvo reemplazo medido) |
-| Q3 — admin, todos los estados | `idx_productos_created_at_desc` para orden; parcial no aplica | No |
+| Query | Índice en plan favorable | Mejora medida | ¿DROP algún índice? |
+|-------|---------------------------|---------------|---------------------|
+| Q1 — catálogo por categoría, activos | `idx_productos_subcategoria_id` (+ Sort) | ~10 % tiempo; sin cambio de nodo | No |
+| Q2 — badge 14 días, activos | `idx_productos_created_at_desc` | ~100× tiempo (2.5 ms → 0.02 ms) | No |
+| Q3 — admin, todos los estados | `idx_productos_created_at_desc` | ~2 % tiempo; elimina Sort 1700 kB | No |
 
 Si en `05_index_audit.sql` algún índice muestra `idx_scan = 0` **después** de correr 01 y 03, revisar estadísticas (`ANALYZE productos`) o definición desalineada antes de proponer `DROP`.
 
@@ -133,7 +135,7 @@ Si en `05_index_audit.sql` algún índice muestra `idx_scan = 0` **después** de
 
 ## 6. Checklist Persona E (entrega)
 
-- [ ] Correr `00` → `01` → `02` → `03` → `05` con seed de volumen acordado
-- [ ] Pegar tabla de tamaños y `idx_scan` de la sección 1
+- [x] Correr `00` → `01` → `02` → `03` → `05` con seed de volumen acordado (15k productos)
+- [x] Pegar tabla de tamaños y `idx_scan` de la sección 1
 - [ ] Incorporar al PDF las conclusiones de las secciones 4 y 5
-- [ ] PR con mensaje tipo `docs(informe): sección E optimización índices` y/o `feat(db): script auditoría índices`
+- [ ] PR con mensaje tipo `docs(informe): sección E optimización índices`

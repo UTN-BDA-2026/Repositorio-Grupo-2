@@ -13,9 +13,24 @@ const metricasPath = path.join(ROOT, 'data', 'metricas.json');
 const hasDatabase =
   process.env.DATABASE_URL != null && String(process.env.DATABASE_URL).trim() !== '';
 
+const adminAuth = require('./lib/auth/admin-auth');
+
 let catalog;
 if (hasDatabase) {
   catalog = require('./lib/catalog');
+}
+
+function adminDenied(res, result) {
+  sendJson(res, result.status, { error: result.error });
+}
+
+function requireAdmin(req, res) {
+  const result = adminAuth.checkAdminRequest(req);
+  if (!result.ok) {
+    adminDenied(res, result);
+    return false;
+  }
+  return true;
 }
 
 function readJson(filePath, fallback) {
@@ -159,6 +174,27 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
 
   try {
+    if (url.pathname === '/api/admin/login' && req.method === 'POST') {
+      const body = await readBody(req);
+      const result = adminAuth.login(body?.password ?? '');
+      if (!result.ok) {
+        sendJson(res, result.status, { error: result.error });
+        return;
+      }
+      sendJson(res, 200, { token: result.token });
+      return;
+    }
+
+    if (url.pathname === '/api/admin/session' && req.method === 'GET') {
+      const token = adminAuth.extractBearerToken(req);
+      if (adminAuth.validateToken(token)) {
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+      sendJson(res, 401, { error: 'Sesión inválida o expirada' });
+      return;
+    }
+
     if (url.pathname === '/api/productos' && req.method === 'GET') {
       if (!hasDatabase) return dbRequired(res);
       const products = await catalog.listProducts({ activeOnly: true });
@@ -168,6 +204,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/admin/productos' && req.method === 'GET') {
       if (!hasDatabase) return dbRequired(res);
+      if (!requireAdmin(req, res)) return;
       const products = await catalog.listProducts({ activeOnly: false });
       sendJson(res, 200, products);
       return;
@@ -191,6 +228,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/guardar-producto' && req.method === 'POST') {
       if (!hasDatabase) return dbRequired(res);
+      if (!requireAdmin(req, res)) return;
       const body = await readBody(req);
       const product = await catalog.createProduct(body || {});
       sendJson(res, 201, product);
@@ -199,6 +237,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/producto' && req.method === 'PATCH') {
       if (!hasDatabase) return dbRequired(res);
+      if (!requireAdmin(req, res)) return;
       const body = await readBody(req);
       if (!body || body.id == null) {
         sendJson(res, 400, { error: 'Campo id requerido' });
@@ -212,6 +251,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/producto' && req.method === 'DELETE') {
       if (!hasDatabase) return dbRequired(res);
+      if (!requireAdmin(req, res)) return;
       const body = await readBody(req);
       if (!body || body.id == null) {
         sendJson(res, 400, { error: 'Campo id requerido' });
@@ -241,7 +281,12 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  → Admin: http://127.0.0.1:${PORT}/admin.html`);
   console.log(`  → Métricas: http://127.0.0.1:${PORT}/metricas.html`);
   if (hasDatabase) {
-    console.log('  → API catálogo: PostgreSQL (DATABASE_URL configurada)\n');
+    console.log('  → API catálogo: PostgreSQL (DATABASE_URL configurada)');
+    if (adminAuth.isAuthConfigured()) {
+      console.log('  → Admin: autenticación server-side activa\n');
+    } else {
+      console.log('  ⚠ ADMIN_PASSWORD no configurada — rutas admin devolverán 503\n');
+    }
   } else {
     console.log('  ⚠ DATABASE_URL no configurada — la API devolverá 503\n');
   }
