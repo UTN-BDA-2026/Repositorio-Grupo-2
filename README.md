@@ -10,22 +10,24 @@ Catálogo e-commerce de moda y accesorios con **PostgreSQL**, panel de administr
 
 El proyecto modela el negocio de **AGUSTINA**: categorías, subcategorías y productos normalizados en PostgreSQL. Un servidor Node.js expone una **API REST local** que alimenta el frontend estático (catálogo, detalle de producto y admin). Las imágenes se suben a Cloudinary desde el navegador; los metadatos y precios viven en la base de datos.
 
-El DDL canónico está en [`db/schema.sql`](db/schema.sql). Las migraciones Sequelize aplican ese esquema para mantener repo y base alineados.
+El DDL canónico está en `[db/schema.sql](db/schema.sql)`. Las migraciones Sequelize aplican ese esquema para mantener repo y base alineados.
 
 ---
 
 ## Tecnologías utilizadas
 
-| Capa | Tecnología |
-|------|------------|
-| Base de datos | **PostgreSQL** (Railway u otro host) |
-| ORM / migraciones | **Sequelize 6** + **sequelize-cli** |
-| Backend local | **Node.js 18+** (`server.js`, HTTP nativo) |
-| Frontend | HTML5, CSS3, JavaScript vanilla |
-| Animaciones | GSAP 3 + ScrollTrigger |
-| Imágenes | Cloudinary (upload desde el admin) |
-| Backup | `pg_dump` / `pg_restore` vía módulo `lib/backup/` |
-| Tests | Node.js built-in test runner (`node --test`) |
+
+| Capa              | Tecnología                                        |
+| ----------------- | ------------------------------------------------- |
+| Base de datos     | **PostgreSQL** (Railway u otro host)              |
+| ORM / migraciones | **Sequelize 6** + **sequelize-cli**               |
+| Backend local     | **Node.js 18+** (`server.js`, HTTP nativo)        |
+| Frontend          | HTML5, CSS3, JavaScript vanilla                   |
+| Animaciones       | GSAP 3 + ScrollTrigger                            |
+| Imágenes          | Cloudinary (upload desde el admin)                |
+| Backup            | `pg_dump` / `pg_restore` vía módulo `lib/backup/` |
+| Tests             | Node.js built-in test runner (`node --test`)      |
+
 
 ---
 
@@ -52,11 +54,13 @@ npm install
 
 Copiar el ejemplo y completar la URL de Postgres:
 
-| Shell | Comando |
-|-------|---------|
+
+| Shell      | Comando                       |
+| ---------- | ----------------------------- |
 | PowerShell | `Copy-Item .env.example .env` |
-| cmd | `copy .env.example .env` |
-| bash | `cp .env.example .env` |
+| cmd        | `copy .env.example .env`      |
+| bash       | `cp .env.example .env`        |
+
 
 Editar `.env`:
 
@@ -69,14 +73,16 @@ DATABASE_SSL=true
 
 Variables opcionales útiles:
 
-| Variable | Default | Uso |
-|----------|---------|-----|
-| `PORT` | `5173` | Puerto del servidor local |
-| `SEED_PRODUCT_COUNT` | `15000` | Filas sintéticas para experimentos de índices |
-| `OPEN_BROWSER` | abre navegador | `false` para no abrir al iniciar |
-| `BACKUP_DIR` | `./backups` | Carpeta de respaldos |
 
-Ver [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md) para el resto de variables de backup.
+| Variable             | Default        | Uso                                           |
+| -------------------- | -------------- | --------------------------------------------- |
+| `PORT`               | `5173`         | Puerto del servidor local                     |
+| `SEED_PRODUCT_COUNT` | `15000`        | Filas sintéticas para experimentos de índices |
+| `OPEN_BROWSER`       | abre navegador | `false` para no abrir al iniciar              |
+| `BACKUP_DIR`         | `./backups`    | Carpeta de respaldos                          |
+
+
+Ver `[docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md)` para el resto de variables de backup.
 
 ### 3. Crear esquema y datos iniciales
 
@@ -105,11 +111,13 @@ npm run dev
 
 Abre automáticamente:
 
-| URL | Contenido |
-|-----|-----------|
-| http://127.0.0.1:5173/ | Catálogo público |
-| http://127.0.0.1:5173/admin.html | Panel admin (login vía `/api/admin/login`; ver `ADMIN_PASSWORD` en `.env`) |
-| http://127.0.0.1:5173/metricas.html | Métricas e informes de rendimiento |
+
+| URL                                                                        | Contenido                                                                  |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [http://127.0.0.1:5173/](http://127.0.0.1:5173/)                           | Catálogo público                                                           |
+| [http://127.0.0.1:5173/admin.html](http://127.0.0.1:5173/admin.html)       | Panel admin (login vía `/api/admin/login`; ver `ADMIN_PASSWORD` en `.env`) |
+| [http://127.0.0.1:5173/metricas.html](http://127.0.0.1:5173/metricas.html) | Métricas e informes de rendimiento                                         |
+
 
 Si `DATABASE_URL` no está configurada, la API responde **503** con un mensaje claro.
 
@@ -117,15 +125,17 @@ Si `DATABASE_URL` no está configurada, la API responde **503** con un mensaje c
 
 Toda la persistencia del catálogo pasa por PostgreSQL (ya no se usa `data/productos-demo.json` en runtime).
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/api/productos` | Catálogo público (`activo = true`) |
-| `GET` | `/api/producto?id=` | Detalle de un producto |
-| `GET` | `/api/admin/productos` | Listado admin (incluye inactivos) |
-| `POST` | `/api/guardar-producto` | Alta de producto |
-| `PATCH` | `/api/producto` | Actualización parcial |
-| `DELETE` | `/api/producto` | Eliminación |
-| `GET` | `/api/metricas` | Datos para la página de métricas |
+
+| Método   | Ruta                    | Descripción                        |
+| -------- | ----------------------- | ---------------------------------- |
+| `GET`    | `/api/productos`        | Catálogo público (`activo = true`) |
+| `GET`    | `/api/producto?id=`     | Detalle de un producto             |
+| `GET`    | `/api/admin/productos`  | Listado admin (incluye inactivos)  |
+| `POST`   | `/api/guardar-producto` | Alta de producto                   |
+| `PATCH`  | `/api/producto`         | Actualización parcial              |
+| `DELETE` | `/api/producto`         | Eliminación                        |
+| `GET`    | `/api/metricas`         | Datos para la página de métricas   |
+
 
 Contrato JSON alineado a la vista `v_productos_catalogo`: `id`, `name`, `price`, `precio_efectivo`, `cat`, `sub`, `image_url`, `images`, `descripcion`, `activo`, `created_at`, `updated_at`.
 
@@ -138,17 +148,17 @@ npm run db:backup:restore -- <id>
 npm test
 ```
 
-Documentación completa: [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md).
+Documentación completa: `[docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md)`.
 
 ### Experimentos de índices (EXPLAIN)
 
-Scripts en [`db/experiments/`](db/experiments/). Requieren datos de volumen (`SEED_PRODUCT_COUNT`).
+Scripts en `[db/experiments/](db/experiments/)`. Requieren datos de volumen (`SEED_PRODUCT_COUNT`).
 
 ```bash
 npm run informe:c
 ```
 
-Informes del grupo: [`informe/seccion_C.md`](informe/seccion_C.md), [`informe/seccion_D.md`](informe/seccion_D.md), [`informe/seccion_E.md`](informe/seccion_E.md).
+Informes del grupo: `[informe/seccion_C.md](informe/seccion_C.md)`, `[informe/seccion_D.md](informe/seccion_D.md)`, `[informe/seccion_E.md](informe/seccion_E.md)`.
 
 ---
 
@@ -187,6 +197,8 @@ erDiagram
     }
 ```
 
+
+
 La vista `v_productos_catalogo` proyecta slugs `cat`/`sub` y campos `name`/`price` para el frontend.
 
 ---
@@ -197,42 +209,46 @@ Referencia rápida para la corrección: **qué** se implementó y **dónde** est
 
 ### 1. Modelado y normalización
 
-- **Dónde:** [`db/schema.sql`](db/schema.sql), migración [`db/migrations/20250511120000-init-agustina-schema.js`](db/migrations/20250511120000-init-agustina-schema.js), modelos en [`db/models/`](db/models/).
+- **Dónde:** `[db/schema.sql](db/schema.sql)`, migración `[db/migrations/20250511120000-init-agustina-schema.js](db/migrations/20250511120000-init-agustina-schema.js)`, modelos en `[db/models/](db/models/)`.
 - **Qué:** Tres entidades normalizadas (categorías → subcategorías → productos), constraints `CHECK`, unicidades, FKs con `ON DELETE RESTRICT`, vista de proyección al JSON del frontend.
 
 ### 2. Índices y optimización de consultas
 
-- **Dónde:** migración [`db/migrations/20250520130000-add-catalog-indexes.js`](db/migrations/20250520130000-add-catalog-indexes.js), scripts [`db/experiments/`](db/experiments/), informes [`informe/seccion_C.md`](informe/seccion_C.md) y [`informe/seccion_E.md`](informe/seccion_E.md).
-- **Qué:** Índices B-tree parciales y de ordenamiento; batería reproducible de `EXPLAIN (ANALYZE, BUFFERS)`; seeder de volumen [`db/seeders/20250511140002-seed-experiment-productos-bulk.js`](db/seeders/20250511140002-seed-experiment-productos-bulk.js).
+- **Dónde:** migración `[db/migrations/20250520130000-add-catalog-indexes.js](db/migrations/20250520130000-add-catalog-indexes.js)`, scripts `[db/experiments/](db/experiments/)`, informes `[informe/seccion_C.md](informe/seccion_C.md)` y `[informe/seccion_E.md](informe/seccion_E.md)`.
+- **Qué:** Índices B-tree parciales y de ordenamiento; batería reproducible de `EXPLAIN (ANALYZE, BUFFERS)`; seeder de volumen `[db/seeders/20250511140002-seed-experiment-productos-bulk.js](db/seeders/20250511140002-seed-experiment-productos-bulk.js)`.
 
-| Índice | Columnas | Uso |
-|--------|----------|-----|
-| `idx_productos_subcategoria_id` | `subcategoria_id` | JOIN por FK |
-| `idx_productos_activos` | `(subcategoria_id, created_at DESC)` WHERE `activo` | Catálogo por categoría |
-| `idx_productos_created_at_desc` | `created_at DESC` | Badge “NUEVO” |
+
+| Índice                          | Columnas                                            | Uso                    |
+| ------------------------------- | --------------------------------------------------- | ---------------------- |
+| `idx_productos_subcategoria_id` | `subcategoria_id`                                   | JOIN por FK            |
+| `idx_productos_activos`         | `(subcategoria_id, created_at DESC)` WHERE `activo` | Catálogo por categoría |
+| `idx_productos_created_at_desc` | `created_at DESC`                                   | Badge “NUEVO”          |
+
 
 ### 3. Backup y restore
 
-- **Dónde:** [`lib/backup/`](lib/backup/), CLI [`scripts/db-backup-cli.js`](scripts/db-backup-cli.js), docs [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md), tests [`tests/backup.test.js`](tests/backup.test.js).
+- **Dónde:** `[lib/backup/](lib/backup/)`, CLI `[scripts/db-backup-cli.js](scripts/db-backup-cli.js)`, docs `[docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md)`, tests `[tests/backup.test.js](tests/backup.test.js)`.
 - **Qué:** Respaldos formato custom o plain comprimido, manifiesto con checksum SHA-256, validación de integridad, política de retención y restore con confirmación.
 
 ### 4. Seguridad
 
-- **Dónde:** [`config/database.js`](config/database.js), [`.env.example`](.env.example), [`lib/auth/admin-auth.js`](lib/auth/admin-auth.js), [`lib/catalog/product-service.js`](lib/catalog/product-service.js), constraints del DDL.
+- **Dónde:** `[config/database.js](config/database.js)`, `[.env.example](.env.example)`, `[lib/auth/admin-auth.js](lib/auth/admin-auth.js)`, `[lib/catalog/product-service.js](lib/catalog/product-service.js)`, constraints del DDL.
 - **Qué:** Credenciales fuera del código (`.env`, ignorado por git); conexión TLS a Railway (`DATABASE_SSL`); consultas parametrizadas con `$1` / `{ bind }` en API y seeders; integridad referencial (`RESTRICT`); autenticación admin **server-side** (`POST /api/admin/login`, token Bearer en rutas de escritura).
 
 ### 5. Transacciones ACID
 
-- **Dónde:** [`lib/catalog/product-service.js`](lib/catalog/product-service.js), rutas en [`server.js`](server.js), seeders en [`db/seeders/`](db/seeders/), tests [`tests/transactions.test.js`](tests/transactions.test.js).
+- **Dónde:** `[lib/catalog/product-service.js](lib/catalog/product-service.js)`, rutas en `[server.js](server.js)`, seeders en `[db/seeders/](db/seeders/)`, tests `[tests/transactions.test.js](tests/transactions.test.js)`.
 - **Qué:** Operaciones multi-paso envueltas en `sequelize.transaction()` con **COMMIT** automático al éxito y **ROLLBACK** ante cualquier error.
 
-| Flujo | Operaciones atómicas | Archivo |
-|-------|----------------------|---------|
-| Alta de producto | Resolver `cat`/`sub` → `subcategoria_id` + `INSERT` | `lib/catalog/product-service.js` → `createProduct` |
-| Actualización | `SELECT … FOR UPDATE` + re-resolución FK + `UPDATE` | `updateProduct` |
-| Eliminación | Bloqueo de fila + `DELETE` | `deleteProduct` |
-| Seed taxonomía | `INSERT` categorías + subcategorías; `down`: deletes encadenados | `20250511140001-seed-catalogo-taxonomia.js` |
-| Seed volumen | `DELETE` previo + INSERT masivo por chunks | `20250511140002-seed-experiment-productos-bulk.js` |
+
+| Flujo            | Operaciones atómicas                                             | Archivo                                            |
+| ---------------- | ---------------------------------------------------------------- | -------------------------------------------------- |
+| Alta de producto | Resolver `cat`/`sub` → `subcategoria_id` + `INSERT`              | `lib/catalog/product-service.js` → `createProduct` |
+| Actualización    | `SELECT … FOR UPDATE` + re-resolución FK + `UPDATE`              | `updateProduct`                                    |
+| Eliminación      | Bloqueo de fila + `DELETE`                                       | `deleteProduct`                                    |
+| Seed taxonomía   | `INSERT` categorías + subcategorías; `down`: deletes encadenados | `20250511140001-seed-catalogo-taxonomia.js`        |
+| Seed volumen     | `DELETE` previo + INSERT masivo por chunks                       | `20250511140002-seed-experiment-productos-bulk.js` |
+
 
 Ejemplo de patrón usado:
 
@@ -247,7 +263,7 @@ return db.sequelize.transaction(async (transaction) => {
 
 ### 6. Decisión NoSQL
 
-- **Dónde:** [`docs/DECISION_NOSQL.md`](docs/DECISION_NOSQL.md).
+- **Dónde:** `[docs/DECISION_NOSQL.md](docs/DECISION_NOSQL.md)`.
 - **Qué:** PostgreSQL exclusivo para el catálogo; imágenes en Cloudinary (URLs en la DB); carrito en `localStorage`. Justificación documentada de por qué no se adoptó MongoDB/Redis.
 
 ---
@@ -256,8 +272,8 @@ return db.sequelize.transaction(async (transaction) => {
 
 Orden de ejecución (`npm run db:seed`):
 
-1. **`20250511140001-seed-catalogo-taxonomia.js`** — categorías y subcategorías (transacción ACID).
-2. **`20250511140002-seed-experiment-productos-bulk.js`** — productos sintéticos `[seed-exp]` para EXPLAIN (transacción ACID; `ANALYZE` post-commit).
+1. `**20250511140001-seed-catalogo-taxonomia.js`** — categorías y subcategorías (transacción ACID).
+2. `**20250511140002-seed-experiment-productos-bulk.js**` — productos sintéticos `[seed-exp]` para EXPLAIN (transacción ACID; `ANALYZE` post-commit).
 
 Cantidad configurable: `SEED_PRODUCT_COUNT` (default **15000**, tope **500000**). Valor `0` omite el bulk.
 
@@ -275,13 +291,15 @@ Script **opcional** para cargar el catálogo de muestra (`data/productos-demo.js
 
 ### Funcionalidad
 
-| Aspecto | Detalle |
-|---------|---------|
-| Origen | `data/productos-demo.json` (array con `name`, `price`, `cat`, `sub`, `image_url`, etc.) |
-| Destino | Tabla `productos`, resolviendo `subcategoria_id` por slugs `cat`/`sub` |
-| Marcador | Prefijo **`[demo-json]`** en `nombre` (mismo criterio que `[seed-exp]` en seeds) |
-| Transacción | Toda la importación en una transacción ACID; error → ROLLBACK |
-| Aislamiento | No modifica seeders, API ni archivos del frontend |
+
+| Aspecto     | Detalle                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------- |
+| Origen      | `data/productos-demo.json` (array con `name`, `price`, `cat`, `sub`, `image_url`, etc.) |
+| Destino     | Tabla `productos`, resolviendo `subcategoria_id` por slugs `cat`/`sub`                  |
+| Marcador    | Prefijo `**[demo-json]`** en `nombre` (mismo criterio que `[seed-exp]` en seeds)        |
+| Transacción | Toda la importación en una transacción ACID; error → ROLLBACK                           |
+| Aislamiento | No modifica seeders, API ni archivos del frontend                                       |
+
 
 Los productos importados se ven en el catálogo vía la API local (`npm run dev`). El prefijo `[demo-json]` permite identificarlos y borrarlos sin tocar productos reales ni los de experimento `[seed-exp]`.
 
@@ -312,20 +330,22 @@ npm run db:import-demo -- --file data/productos-demo.json
 
 Variable opcional: `DEMO_IMPORT_FILE` (ruta por defecto al JSON si no pasás `--file`).
 
-Script: [`scripts/import-demo-products.js`](scripts/import-demo-products.js).
+Script: `[scripts/import-demo-products.js](scripts/import-demo-products.js)`.
 
 ---
 
 ## Errores frecuentes
 
-| Síntoma | Solución |
-|---------|----------|
-| `self-signed certificate` al migrar | `DATABASE_SSL=true` en `.env` |
-| `ECONNREFUSED` / timeout | Revisar `DATABASE_URL`, firewall, VPN |
-| `password authentication failed` | Copiar de nuevo la URL desde Railway |
-| Tablas vacías tras migrate | Ejecutar `npm run db:seed` |
-| API responde 503 | Falta `DATABASE_URL` en `.env` en la raíz del repo |
+
+| Síntoma                                | Solución                                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `self-signed certificate` al migrar    | `DATABASE_SSL=true` en `.env`                                               |
+| `ECONNREFUSED` / timeout               | Revisar `DATABASE_URL`, firewall, VPN                                       |
+| `password authentication failed`       | Copiar de nuevo la URL desde Railway                                        |
+| Tablas vacías tras migrate             | Ejecutar `npm run db:seed`                                                  |
+| API responde 503                       | Falta `DATABASE_URL` en `.env` en la raíz del repo                          |
 | `relation "categorias" already exists` | `npx sequelize-cli db:migrate:status`; coordinar con el grupo antes de undo |
+
 
 ---
 
@@ -354,17 +374,19 @@ Script: [`scripts/import-demo-products.js`](scripts/import-demo-products.js).
 
 ## Scripts npm
 
-| Comando | Acción |
-|---------|--------|
-| `npm run dev` | Servidor local en `:5173` |
-| `npm run db:migrate` | Aplicar migraciones |
-| `npm run db:seed` | Cargar seeds |
-| `npm run db:setup` | Migrate + seed |
-| `npm run db:import-demo` | Importar `data/productos-demo.json` a PostgreSQL (opcional) |
-| `npm run db:import-demo:undo` | Quitar productos importados con prefijo `[demo-json]` |
-| `npm run db:backup` | Crear backup |
-| `npm run informe:c` | Generar salidas EXPLAIN para informe C |
-| `npm test` | Ejecutar tests (backup + transacciones si hay `DATABASE_URL`) |
+
+| Comando                       | Acción                                                        |
+| ----------------------------- | ------------------------------------------------------------- |
+| `npm run dev`                 | Servidor local en `:5173`                                     |
+| `npm run db:migrate`          | Aplicar migraciones                                           |
+| `npm run db:seed`             | Cargar seeds                                                  |
+| `npm run db:setup`            | Migrate + seed                                                |
+| `npm run db:import-demo`      | Importar `data/productos-demo.json` a PostgreSQL (opcional)   |
+| `npm run db:import-demo:undo` | Quitar productos importados con prefijo `[demo-json]`         |
+| `npm run db:backup`           | Crear backup                                                  |
+| `npm run informe:c`           | Generar salidas EXPLAIN para informe C                        |
+| `npm test`                    | Ejecutar tests (backup + transacciones si hay `DATABASE_URL`) |
+
 
 ---
 
@@ -380,3 +402,17 @@ Script: [`scripts/import-demo-products.js`](scripts/import-demo-products.js).
 Sitio desplegado en Vercel (puede usar infraestructura anterior): [https://web-agustina.vercel.app/](https://web-agustina.vercel.app/)
 
 Para la entrega académica de Base de Datos, la referencia operativa es este repo con **PostgreSQL + API local + transacciones**.
+
+Solucion de Errores Corregidos por el otro Grupo
+
+**Qué se agregó:**
+
+1. `cleanupExpiredSessions()` — recorre el `Map` y elimina entradas cuyo `createdAt` superó `SESSION_TTL_MS` (8 horas).
+2. `setInterval` — ejecuta esa función cada 15 minutos al cargar el módulo (cuando arranca el servidor).
+
+**Comportamiento:**
+
+- Antes: un token expirado solo se borraba si alguien lo enviaba de nuevo en una petición.
+- Ahora: los tokens vencidos se eliminan solos como máximo ~15 minutos después de expirar, aunque nadie los use.
+
+La validación en `validateToken()` se mantiene igual como segunda línea de defensa. Con esto se evita que tokens huérfanos (por ataques al login o sesiones abandonadas) acumulen memoria indefinidamente.
