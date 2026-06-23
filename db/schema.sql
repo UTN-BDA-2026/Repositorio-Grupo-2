@@ -40,7 +40,11 @@ CREATE TABLE productos (
     id                BIGSERIAL PRIMARY KEY,
     nombre            VARCHAR(255) NOT NULL,
     precio            INTEGER      NOT NULL CHECK (precio >= 0),
-    precio_efectivo   INTEGER CHECK (precio_efectivo IS NULL OR precio_efectivo >= 0),
+    precio_efectivo   INTEGER,
+    CONSTRAINT productos_precio_efectivo_chk CHECK (
+        precio_efectivo IS NULL
+        OR (precio_efectivo >= 0 AND precio_efectivo <= precio)
+    ),
     subcategoria_id   INTEGER      NOT NULL REFERENCES subcategorias (id) ON UPDATE CASCADE ON DELETE RESTRICT,
     image_url         TEXT         NOT NULL,
     images            TEXT[]       NOT NULL DEFAULT '{}'::text[],

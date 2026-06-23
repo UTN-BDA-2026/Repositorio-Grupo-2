@@ -422,3 +422,34 @@ La validación en `validateToken()` se mantiene igual como segunda línea de def
 **Error:** En `db/schema.sql`, `precio` y `precio_efectivo` son `INTEGER`, pero `createProduct` y `updateProduct` validaban con `Number.isFinite()`, que acepta floats (ej. `150.99`). PostgreSQL abortaba la transacción y el servidor respondía **500** exponiendo el stack trace.
 
 **Solución:** Reemplazar `Number.isFinite()` por `Number.isInteger()` en `precio` y `precio_efectivo`, devolviendo **400** con mensaje claro antes de llegar a la base de datos.
+
+### Restricción lógica entre precio de lista y precio promocional (`db/schema.sql`)
+
+**Observación del grupo corrector:** el `CHECK` sobre `precio_efectivo` solo validaba que no fuera negativo:
+
+```sql
+CHECK (precio_efectivo IS NULL OR precio_efectivo >= 0)
+```
+
+La base aceptaba datos inválidos, por ejemplo `precio = 1000` y `precio_efectivo = 5000`, corrompiendo el catálogo sin error visible.
+
+**Solución aplicada:**
+
+1. **Esquema canónico** (`db/schema.sql`): constraint con nombre explícito `productos_precio_efectivo_chk`:
+
+```sql
+CONSTRAINT productos_precio_efectivo_chk CHECK (
+  precio_efectivo IS NULL
+  OR (precio_efectivo >= 0 AND precio_efectivo <= precio)
+)
+```
+
+2. **Migración** (`db/migrations/20250603120000-add-precio-efectivo-check.js`): `ALTER TABLE` en bases ya creadas. PostgreSQL valida filas existentes al agregar el constraint; si hay datos inválidos, la migración falla y hay que corregirlos antes de reintentar.
+
+3. **API** (`lib/catalog/product-service.js`): validación en `createProduct` y `updateProduct` que rechaza con **400** si `precio_efectivo > precio`, como defensa antes de llegar a la BD.
+
+**Aplicar en entornos existentes:**
+
+```bash
+npx sequelize-cli db:migrate
+```
