@@ -416,3 +416,9 @@ Solucion de Errores Corregidos por el otro Grupo
 - Ahora: los tokens vencidos se eliminan solos como máximo ~15 minutos después de expirar, aunque nadie los use.
 
 La validación en `validateToken()` se mantiene igual como segunda línea de defensa. Con esto se evita que tokens huérfanos (por ataques al login o sesiones abandonadas) acumulen memoria indefinidamente.
+
+### Validación de precios decimales (`product-service.js`)
+
+**Error:** En `db/schema.sql`, `precio` y `precio_efectivo` son `INTEGER`, pero `createProduct` y `updateProduct` validaban con `Number.isFinite()`, que acepta floats (ej. `150.99`). PostgreSQL abortaba la transacción y el servidor respondía **500** exponiendo el stack trace.
+
+**Solución:** Reemplazar `Number.isFinite()` por `Number.isInteger()` en `precio` y `precio_efectivo`, devolviendo **400** con mensaje claro antes de llegar a la base de datos.
